@@ -14,34 +14,6 @@ namespace KSaveDataMan
 
     }
 
-    public class GameData<T>
-    {
-        private GameData() { }
-
-        internal static GameData<T> CreateHandle(string[] identifiers)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        T g_value;
-
-        /// <summary>
-        /// Get does I/O operation, update corresponding internal memory data and then returns it
-        /// Set actually updates both internal memory data as well as the value of atomic in local storage
-        /// </summary>
-        public T Value
-        {
-            get 
-            {
-                return g_value;
-            }
-            set 
-            {
-                g_value = value;
-            }
-        }
-    }
-
     public class EncryptionUsageDescription
     {
         
@@ -61,6 +33,10 @@ namespace KSaveDataMan
     //CDATA style thing or get/set or both or completely new?
     public static class SaveDataManager
     {
+        internal static SaveDataSetting setting = null;
+        internal static EncryptionUsageDescription encryptionSetting = null;
+        internal static CloudUsageDescription cloudSetting = null;
+
         /// <summary>
         /// Initialize save data manager.
         /// </summary>
@@ -89,20 +65,38 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the atomic data</param>
         public static void DeleteAtomic(params string[] identifiers)
         {
-            throw new System.NotImplementedException();
+            AtomicInternal.DeleteData(identifiers);
+        }
+
+        /// <summary>
+        /// Write all atomic save data to device.
+        /// <para>The system automatically writes at sceneload/app exit.</para>
+        /// </summary>
+        public static void SaveAtomicToDevice()
+        {
+            AtomicInternal.WriteToDevice();
+        }
+
+        /// <summary>
+        /// Load all atomic data to memory
+        /// <para>The system automatically loads atomic save file to memory at first usage if it not loaded already.</para>
+        /// </summary>
+        public static void LoadAtomicFromDevice()
+        {
+            AtomicInternal.LoadFromDevice();
         }
 
         /// <summary>
         /// Using the identifiers provided, returns a data handle to user.
         /// <para>If the data already exists then the handle represents current data.</para>
-        /// <para>Otherwise, a fresh atomic data will be created in device.</para>
+        /// <para>Otherwise, a fresh atomic data will be created.</para>
         /// </summary>
         /// <typeparam name="T">Data type</typeparam>
         /// <param name="identifiers">List of labels attributed to the atomic data</param>
         /// <returns></returns>
-        public static GameData<T> GetOrCreateAtomic<T>(params string[] identifiers)
+        public static AtomicSaveData<T> GetOrCreateAtomic<T>(params string[] identifiers) where T : struct
         {
-            return GameData<T>.CreateHandle(identifiers);
+            return AtomicSaveData<T>.CreateHandle(identifiers);
         }
         #endregion
 
