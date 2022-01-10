@@ -19,6 +19,7 @@ namespace KSaveDataMan
         [SerializeField] internal AtomicSaveString_Internal[] data;
     }
 
+    //depending upon user main setting, we might choose to do it with playerpref as well
     internal static class AtomicInternal
     {
         internal static AtomicSaves_Internal saveInternal = null;

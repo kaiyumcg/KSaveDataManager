@@ -150,6 +150,17 @@ namespace KSaveDataMan
 
             //GameObject, seperate handler through json
 
+
+            //DONE
+            //wrapper class
+            //Bounds, BoundsInt, LayerMask, Rect, RectInt, Vector2Int, Vector3Int
+
+            //total custom class
+            //Ray, Ray2D, DateTime, TimeSpan
+
+            //direct json
+            //BoneWeight1, BoneWeight, Color, Color32, GradientAlphaKey, GradientColorKey, HumanPose, RangeInt, Vector2, Vector3, Vector4, Quaternion
+
             return default;
         }
 
