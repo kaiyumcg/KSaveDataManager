@@ -19,7 +19,7 @@ namespace KSaveDataMan
             {
                 AtomicInternal.LoadFromDevice();
             }
-            AtomicInternal.InsertAtomicIfReq(identifiers);
+            AtomicInternal.InsertAtomicIfReq(identifiers, typeof(T).Name);
             var handle = new AtomicSaveData<T>();
             handle.keys = identifiers;
             return handle;
@@ -28,11 +28,16 @@ namespace KSaveDataMan
         string[] keys;
         T g_value;
 
+        public bool HasData()
+        {
+            return AtomicInternal.HasData(keys, typeof(T).Name);
+        }
+
         public T Value
         {
             get
             {
-                var st = AtomicInternal.GetAtomic(keys);
+                var st = AtomicInternal.GetAtomic(keys, typeof(T).Name);
                 g_value = GetValueFromString(st);
                 return g_value;
             }
@@ -40,14 +45,111 @@ namespace KSaveDataMan
             {
                 var vl = value;
                 var st = ConvertValueToString(vl);
-                AtomicInternal.SetAtomic(st, keys);
+                AtomicInternal.SetAtomic(st, keys, typeof(T).Name);
                 g_value = vl;
             }
         }
 
-        //supports all well known simple data here such as int, float, datetime, vector etc
         T GetValueFromString(string vl)
         {
+            T result = default;
+            if (typeof(T) == typeof(int))
+            {
+                int res = default;
+                int.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(long))
+            {
+                long res = default;
+                long.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(ulong))
+            {
+                ulong res = default;
+                ulong.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(short))
+            {
+                short res = default;
+                short.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(ushort))
+            {
+                ushort res = default;
+                ushort.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(uint))
+            {
+                uint res = default;
+                uint.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(bool))
+            {
+                bool res = default;
+                bool.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(byte))
+            {
+                byte res = default;
+                byte.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(sbyte))
+            {
+                sbyte res = default;
+                sbyte.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(char))
+            {
+                char res = default;
+                char.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(float))
+            {
+                float res = default;
+                float.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(decimal))
+            {
+                decimal res = default;
+                decimal.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                double res = default;
+                double.TryParse(vl, out res);
+                result = (T)(object)res;
+            }
+            else if (typeof(T) == typeof(string))
+            {
+                result = (T)(object)vl;
+            }
+            else if (typeof(T) == typeof(System.Enum))
+            {
+                T res = default;
+                System.Enum.TryParse<T>(vl, true, out res);
+                result = (T)(object)res;
+            }
+
+            //Bounds, BoundsInt, BoneWeight1, BoneWeight, Color, Color32, Gradient, GradientAlphaKey, GradientColorKey, 
+            //Grid, GridLayout, Hash128, HumanBone, HumanBodyBone, HumanPose, Keyframe, LayerMask, SortingLayer, Light,
+            //Material, Motion, Ray, RangeInt, Ray2D, RaycastHit, RaycastHit2D, Rect, RectInt, Vector2, Vector2Int, Vector3, Vector3Int, Vector4
+            //DateTime
+            //TimeSpan
+
+            //GameObject, seperate handler through json
+
             return default;
         }
 

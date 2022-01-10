@@ -7,12 +7,14 @@ using UnityEngine;
 
 public static class CryptoUtil
 {
-    private readonly static byte[] Key = Convert.FromBase64String("AsISxq9OwdZag1163OJqwovXfSWG98m+sPjVwJecfe4=");
+    internal static string _Key_Str = "AsISxq9OwdZag1163OJqwovXfSWG98m+sPjVwJecfe4=";
+    internal static string _IV_Str = "Aq0UThtJhjbuyWXtmZs1rw==";
 
-    private readonly static byte[] IV = Convert.FromBase64String("Aq0UThtJhjbuyWXtmZs1rw==");
-
-    private static byte[] EncryptStringToBytes(string profileText)
+    private static byte[] EncryptStringToBytes(string plainText)
     {
+        byte[] Key = Convert.FromBase64String(_Key_Str);
+        byte[] IV = Convert.FromBase64String(_IV_Str);
+
         byte[] encryptedAuditTrail;
 
         using (Aes newAes = Aes.Create())
@@ -28,7 +30,7 @@ public static class CryptoUtil
                 {
                     using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
                     {
-                        swEncrypt.Write(profileText);
+                        swEncrypt.Write(plainText);
                     }
                     encryptedAuditTrail = msEncrypt.ToArray();
                 }
@@ -38,8 +40,10 @@ public static class CryptoUtil
         return encryptedAuditTrail;
     }
 
-    private static string DecryptStringFromBytes(byte[] profileText)
+    private static string DecryptStringFromBytes(byte[] data)
     {
+        byte[] Key = Convert.FromBase64String(_Key_Str);
+        byte[] IV = Convert.FromBase64String(_IV_Str);
         string decryptText;
 
         using (Aes newAes = Aes.Create())
@@ -49,7 +53,7 @@ public static class CryptoUtil
 
             ICryptoTransform decryptor = newAes.CreateDecryptor(Key, IV);
 
-            using (MemoryStream msDecrypt = new MemoryStream(profileText))
+            using (MemoryStream msDecrypt = new MemoryStream(data))
             {
                 using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                 {

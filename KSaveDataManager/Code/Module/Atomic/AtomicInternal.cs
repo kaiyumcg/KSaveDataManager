@@ -9,6 +9,8 @@ namespace KSaveDataMan
     {
         [SerializeField] internal string[] keys;
         [SerializeField] internal string value;
+        [SerializeField] internal bool game_wrote_it;
+        [SerializeField] internal string typeName;
     }
 
     [System.Serializable]
@@ -47,17 +49,27 @@ namespace KSaveDataMan
             }
         }
 
-        internal static void InsertAtomicIfReq(string[] keys)
+        internal static void InsertAtomicIfReq(string[] keys, string typeName)
         {
 
         }
 
-        internal static string GetAtomic(string[] keys)
+        internal static string GetAtomic(string[] keys, string typeName)
         {
+            if (saveInternal == null) { LoadFromDevice(); }
+            InsertAtomicIfReq(keys, typeName);
             throw new System.NotImplementedException();
         }
 
-        internal static void SetAtomic(string data, string[] keys)
+        internal static void SetAtomic(string data, string[] keys, string typeName)
+        {
+            if (saveInternal == null) { LoadFromDevice(); }
+            InsertAtomicIfReq(keys, typeName);
+            //set wrote flag
+            throw new System.NotImplementedException();
+        }
+
+        internal static bool HasData(string[] keys, string typeName)
         {
             throw new System.NotImplementedException();
         }
