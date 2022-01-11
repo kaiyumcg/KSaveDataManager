@@ -24,6 +24,9 @@ namespace KSaveDataMan
     {
         internal static AtomicSaves_Internal saveInternal = null;
         internal static SaveDataOperationManager opMan = null;
+        internal static SaveDataSetting setting = null;
+        internal static EncryptionUsageDescription encryptionUsage = null;
+
         internal static void WriteToDevice()
         {
             //convert 'saveInternal' to json string
@@ -57,15 +60,11 @@ namespace KSaveDataMan
 
         internal static string GetAtomic(string[] keys, string typeName)
         {
-            if (saveInternal == null) { LoadFromDevice(); }
-            InsertAtomicIfReq(keys, typeName);
             throw new System.NotImplementedException();
         }
 
         internal static void SetAtomic(string data, string[] keys, string typeName)
         {
-            if (saveInternal == null) { LoadFromDevice(); }
-            InsertAtomicIfReq(keys, typeName);
             //set wrote flag
             throw new System.NotImplementedException();
         }

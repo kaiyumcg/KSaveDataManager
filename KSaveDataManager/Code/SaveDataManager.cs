@@ -16,7 +16,16 @@ namespace KSaveDataMan
 
     public class EncryptionUsageDescription
     {
-        
+        string _KEY = "AsISxq9OwdZag1163OJqwovXfSWG98m+sPjVwJecfe4=";
+        string _IV = "Aq0UThtJhjbuyWXtmZs1rw==";
+        public string KEY { get { return _KEY; } }
+        public string IV { get { return _IV; } }
+
+        public EncryptionUsageDescription(string key, string iv)
+        {
+            _KEY = key;
+            _IV = iv;
+        }
     }
 
     public class CloudUsageDescription
@@ -26,7 +35,10 @@ namespace KSaveDataMan
 
     public class SaveDataSetting
     {
-        
+        bool debugMessage = false;
+        public bool DebugMessage { get { return debugMessage; } }
+        bool jsonPettyPrint = false;
+        public bool JsonPettyPrint { get { return jsonPettyPrint; } }
     }
 
     //cloud, bigdata etc module desc static data so that we can query operation for each modules
@@ -48,6 +60,8 @@ namespace KSaveDataMan
         {
             
         }
+
+        //Gameobject save class(asset bundle replacement?)
 
         /// <summary>
         /// Dengerous! This will wipe out all atomic, small class/struct data and cloud data(if user credential is set properly during initialization)
