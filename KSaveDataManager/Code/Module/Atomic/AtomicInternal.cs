@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
+using System.IO;
 
 namespace KSaveDataMan
 {
@@ -26,12 +28,50 @@ namespace KSaveDataMan
         internal static SaveDataOperationManager opMan = null;
         internal static SaveDataSetting setting = null;
         internal static EncryptionUsageDescription encryptionUsage = null;
-
         internal static void WriteToDevice()
         {
-            //convert 'saveInternal' to json string
-            //encrypt the json string or not depending upon setting
-            //write the string as byte array to "atomic.sv" file in persistent data folder
+            if (setting.UseUnityPlayerPrefForAtomic) { PlayerPrefs.Save(); }
+            else
+            {
+                if (saveInternal == null) { return; }
+                string json = "";
+                try
+                {
+                    json = JsonUtility.ToJson(saveInternal);
+                }
+                catch (System.Exception ex)
+                {
+                    if (setting.DebugMessage) 
+                    { 
+                        Debug.LogError("Can not convert the save data into json. Exception message: " + ex.Message); 
+                    }
+                }
+                byte[] saveBytes = null;
+                try
+                {
+                    saveBytes = encryptionUsage == null ? Encoding.ASCII.GetBytes(json) : CryptoUtil.EncryptStringToBytes(json);
+                }
+                catch (System.Exception ex)
+                {
+                    if (setting.DebugMessage)
+                    {
+                        Debug.LogError("Byte conversion error. This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
+                    }
+                }
+                
+                var fPath = Path.Combine(Application.persistentDataPath, "atomic.sv");
+                try
+                {
+                    File.WriteAllBytes(fPath, saveBytes);
+                }
+                catch (System.Exception ex)
+                {
+                    if (setting.DebugMessage)
+                    {
+                        Debug.LogError("Can not write the atomic save file into disk! Exception message: " + ex.Message);
+                    }
+                }
+            }
         }
 
         internal static void LoadFromDevice()
@@ -53,11 +93,13 @@ namespace KSaveDataMan
             }
         }
 
+        //create set with keys if not exist
         internal static void InsertAtomicIfReq(string[] keys, string typeName)
         {
 
         }
 
+        //playerpref get or get from our data
         internal static string GetAtomic(string[] keys, string typeName)
         {
             throw new System.NotImplementedException();

@@ -39,6 +39,8 @@ namespace KSaveDataMan
         public bool DebugMessage { get { return debugMessage; } }
         bool jsonPettyPrint = false;
         public bool JsonPettyPrint { get { return jsonPettyPrint; } }
+        bool useUnityPlayerPrefForAtomic = false;
+        public bool UseUnityPlayerPrefForAtomic { get { return useUnityPlayerPrefForAtomic; } }
     }
 
     //cloud, bigdata etc module desc static data so that we can query operation for each modules
