@@ -26,8 +26,8 @@ namespace KSaveDataMan
     {
         internal static AtomicSaves_Internal saveInternal = null;
         internal static SaveDataOperationManager opMan = null;
-        internal static SaveDataSetting setting = null;
-        internal static EncryptionUsageDescription encryptionUsage = null;
+        internal static SaveDataConfig setting = null;
+        internal static EncryptionConfig encryptionUsage = null;
         internal static void WriteToDevice()
         {
             if (setting.UseUnityPlayerPrefForAtomic) { PlayerPrefs.Save(); }

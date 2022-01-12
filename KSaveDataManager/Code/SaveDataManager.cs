@@ -2,63 +2,18 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    public enum CloudDataCode { Success = 0, NoInternet = 1, ServerConnectionError = 2, ServerStorageFull = 3, InvalidOperationError = 4 }
-    public enum LocalDataCode { Success = 0, PermissionOrIOError = 1, InvalidOperationError = 2 }
-
-    //Implements ieneumerators so that we can use it in coroutine as well
-    public class AsyncDataOpHandle
-    {
-        //progress float and percent format
-        //is completed
-        //label
-
-    }
-
-    public class EncryptionUsageDescription
-    {
-        string _KEY = "AsISxq9OwdZag1163OJqwovXfSWG98m+sPjVwJecfe4=";
-        string _IV = "Aq0UThtJhjbuyWXtmZs1rw==";
-        public string KEY { get { return _KEY; } }
-        public string IV { get { return _IV; } }
-
-        public EncryptionUsageDescription(string key, string iv)
-        {
-            _KEY = key;
-            _IV = iv;
-        }
-    }
-
-    public class CloudUsageDescription
-    {
-        
-    }
-
-    public class SaveDataSetting
-    {
-        bool debugMessage = false;
-        public bool DebugMessage { get { return debugMessage; } }
-        bool jsonPettyPrint = false;
-        public bool JsonPettyPrint { get { return jsonPettyPrint; } }
-        bool useUnityPlayerPrefForAtomic = false;
-        public bool UseUnityPlayerPrefForAtomic { get { return useUnityPlayerPrefForAtomic; } }
-    }
-
     //cloud, bigdata etc module desc static data so that we can query operation for each modules
     //CDATA style thing or get/set or both or completely new?
     public static class SaveDataManager
     {
-        internal static SaveDataSetting setting = null;
-        internal static EncryptionUsageDescription encryptionSetting = null;
-        internal static CloudUsageDescription cloudSetting = null;
-
         /// <summary>
         /// Initialize save data manager.
         /// </summary>
         /// <param name="encryptionSetting">Encryption setting. If null then it will not use any encryption.</param>
         /// <param name="cloudSetting">Cloud setting. If null then it will raise exception if code use any cloud feature</param>
         /// <param name="OnComplete">Applicable for cloud usage. Ignore if you do not use it</param>
-        public static void InitSystem(SaveDataSetting mainSetting, System.Action OnComplete = null, 
-            EncryptionUsageDescription encryptionSetting = null, CloudUsageDescription cloudSetting = null)
+        public static void InitSystem(SaveDataConfig mainSetting, System.Action OnComplete = null, 
+            EncryptionConfig encryptionSetting = null, CloudConfig cloudSetting = null)
         {
             
         }

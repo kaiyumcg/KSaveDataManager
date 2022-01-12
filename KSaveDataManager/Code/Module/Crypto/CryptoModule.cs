@@ -9,7 +9,7 @@ namespace KSaveDataMan
 {
     internal static class CryptoUtil
     {
-        internal static EncryptionUsageDescription encryptionSetting = null;
+        internal static EncryptionConfig encryptionSetting = null;
         internal static byte[] EncryptStringToBytes(string plainText)
         {
             byte[] Key = Convert.FromBase64String(encryptionSetting.KEY);
