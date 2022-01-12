@@ -9,11 +9,10 @@ namespace KSaveDataMan
 {
     internal static class CryptoUtil
     {
-        internal static EncryptionConfig encryptionSetting = null;
-        internal static byte[] EncryptStringToBytes(string plainText)
+        internal static byte[] EncryptStringToBytes(string plainText, string key, string iv)
         {
-            byte[] Key = Convert.FromBase64String(encryptionSetting.KEY);
-            byte[] IV = Convert.FromBase64String(encryptionSetting.IV);
+            byte[] Key = Convert.FromBase64String(key);
+            byte[] IV = Convert.FromBase64String(iv);
             byte[] auditTrail;
             using (Aes newAes = Aes.Create())
             {
@@ -38,10 +37,10 @@ namespace KSaveDataMan
             return auditTrail;
         }
 
-        internal static string DecryptStringFromBytes(byte[] data)
+        internal static string DecryptStringFromBytes(byte[] data, string key, string iv)
         {
-            byte[] Key = Convert.FromBase64String(encryptionSetting.KEY);
-            byte[] IV = Convert.FromBase64String(encryptionSetting.IV);
+            byte[] Key = Convert.FromBase64String(key);
+            byte[] IV = Convert.FromBase64String(iv);
             string decryptText;
             using (Aes newAes = Aes.Create())
             {

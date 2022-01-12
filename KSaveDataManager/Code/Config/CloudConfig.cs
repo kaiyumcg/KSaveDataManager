@@ -6,6 +6,6 @@ namespace KSaveDataMan
 {
     public class CloudConfig
     {
-        
+        internal CloudConfig() { }
     }
 }

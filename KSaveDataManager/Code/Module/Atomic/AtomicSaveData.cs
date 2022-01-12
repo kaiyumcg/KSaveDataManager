@@ -12,7 +12,7 @@ namespace KSaveDataMan
         private AtomicSaveData() { }
         internal static AtomicSaveData<T> CreateHandle(string[] identifiers)
         {
-            AtomUtil.CheckInternals<T>(identifiers);
+            AtomicInternal.Check<T>(identifiers);
             var handle = new AtomicSaveData<T>();
             handle.keys = identifiers;
             return handle;
@@ -20,25 +20,22 @@ namespace KSaveDataMan
 
         public bool HasData()
         {
-            AtomUtil.CheckInternals<T>(keys);
-            return AtomicInternal.HasData(keys, typeof(T).Name);
+            return AtomicInternal.HasData<T>(keys);
         }
 
         public T Value
         {
             get
             {
-                AtomUtil.CheckInternals<T>(keys);
-                var st = AtomicInternal.GetAtomic(keys, typeof(T).Name);
+                var st = AtomicInternal.GetAtomic<T>(keys);
                 g_value = GetValueFromString(st);
                 return g_value;
             }
             set
             {
-                AtomUtil.CheckInternals<T>(keys);
                 var vl = value;
                 var st = ConvertValueToString(vl);
-                AtomicInternal.SetAtomic(st, keys, typeof(T).Name);
+                AtomicInternal.SetAtomic<T>(st, keys);
                 g_value = vl;
             }
         }
@@ -323,6 +320,7 @@ namespace KSaveDataMan
 
         string ConvertValueToString(T v)
         {
+            var usePettyPrint = Config.data == null ? false : Config.data.JsonPettyPrint;
             string result = "";
             if (typeof(T) == typeof(int) || typeof(T) == typeof(long) || typeof(T) == typeof(ulong) || typeof(T) == typeof(short)
                 || typeof(T) == typeof(ushort) || typeof(T) == typeof(uint) || typeof(T) == typeof(bool) || typeof(T) == typeof(byte)
@@ -345,62 +343,62 @@ namespace KSaveDataMan
             {
                 Bounds curVal = (Bounds)(object)v;
                 Bounds_Wrapper jsData = new Bounds_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(BoundsInt))
             {
                 BoundsInt curVal = (BoundsInt)(object)v;
                 BoundsInt_Wrapper jsData = new BoundsInt_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(LayerMask))
             {
                 LayerMask curVal = (LayerMask)(object)v;
                 LayerMask_Wrapper jsData = new LayerMask_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Rect))
             {
                 Rect curVal = (Rect)(object)v;
                 Rect_Wrapper jsData = new Rect_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(RectInt))
             {
                 RectInt curVal = (RectInt)(object)v;
                 RectInt_Wrapper jsData = new RectInt_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Vector2Int))
             {
                 Vector2Int curVal = (Vector2Int)(object)v;
                 Vector2Int_Wrapper jsData = new Vector2Int_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Vector3Int))
             {
                 Vector3Int curVal = (Vector3Int)(object)v;
                 Vector3Int_Wrapper jsData = new Vector3Int_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Ray))
             {
                 Ray curVal = (Ray)(object)v;
                 Ray_Wrapper jsData = new Ray_Wrapper { rayDirection = curVal.direction, rayOrigin = curVal.origin };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Ray2D))
             {
                 Ray2D curVal = (Ray2D)(object)v;
                 Ray2D_Wrapper jsData = new Ray2D_Wrapper { rayDirection = curVal.direction, rayOrigin = curVal.origin };
-                result = JsonUtility.ToJson(jsData, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(BoneWeight1) || typeof(T) == typeof(BoneWeight) || typeof(T) == typeof(Color)
                 || typeof(T) == typeof(Color32) || typeof(T) == typeof(GradientAlphaKey) || typeof(T) == typeof(GradientColorKey)
                 || typeof(T) == typeof(HumanPose) || typeof(T) == typeof(RangeInt) || typeof(T) == typeof(Vector2)
                 || typeof(T) == typeof(Vector3) || typeof(T) == typeof(Vector4) || typeof(T) == typeof(Quaternion))
             {
-                result = JsonUtility.ToJson(v, AtomicInternal.setting.JsonPettyPrint);
+                result = JsonUtility.ToJson(v, usePettyPrint);
             }
             else
             {

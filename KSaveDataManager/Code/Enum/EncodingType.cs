@@ -4,8 +4,5 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    internal static class Config
-    {
-        internal static SaveDataConfig data = null;
-    }
+    public enum EncodingType { ASCII = 0, UTF_7 = 1, UTF_8 = 2, UTF_32 = 3, UNICODE = 4, BIG_ENDIAN = 5}
 }

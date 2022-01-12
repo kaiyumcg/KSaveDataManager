@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    internal static class Config
+    public enum AtomicInternalOpMode
     {
-        internal static SaveDataConfig data = null;
+        Read = 0, Write = 1, Delete = 2, Creation = 3
     }
 }

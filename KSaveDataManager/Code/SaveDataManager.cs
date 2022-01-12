@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace KSaveDataMan
 {
@@ -6,16 +7,24 @@ namespace KSaveDataMan
     //CDATA style thing or get/set or both or completely new?
     public static class SaveDataManager
     {
-        /// <summary>
-        /// Initialize save data manager.
-        /// </summary>
-        /// <param name="encryptionSetting">Encryption setting. If null then it will not use any encryption.</param>
-        /// <param name="cloudSetting">Cloud setting. If null then it will raise exception if code use any cloud feature</param>
-        /// <param name="OnComplete">Applicable for cloud usage. Ignore if you do not use it</param>
-        public static void InitSystem(SaveDataConfig mainSetting, System.Action OnComplete = null, 
-            EncryptionConfig encryptionSetting = null, CloudConfig cloudSetting = null)
+        public static bool IsInitialized { get { return SaveState.systemInitialised; } }
+        public static System.Action OnInitialized;
+        public static UnityEvent OnInitializedEvent;
+
+        public static void InitSystem(SaveDataConfig config, System.Action OnComplete = null)
         {
-            
+            if (SaveState.operationManager == null)
+            {
+                var g = new GameObject("_SaveDataOperationManager_Gen_");
+                SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
+            }
+            Config.data = config;
+            AtomicInternal.LoadFromDevice();
+            //todo do cloud initialization stuffs
+            //todo do any big data or small class data json initialization stuffs
+            SaveState.systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
+            OnInitialized?.Invoke();
+            OnInitializedEvent?.Invoke();
         }
 
         //Gameobject save class(asset bundle replacement?)
@@ -25,6 +34,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void DeleteAllData()
         {
+            AtomicInternal.DeleteData(null);
             throw new System.NotImplementedException();
         }
 
@@ -50,7 +60,7 @@ namespace KSaveDataMan
 
         /// <summary>
         /// Load all atomic data to memory
-        /// <para>The system automatically loads atomic save file to memory at first usage if it not loaded already.</para>
+        /// <para>The system automatically loads atomic save file to memory at first usage if it not loaded already during initialisation.</para>
         /// </summary>
         public static void LoadAtomicFromDevice()
         {

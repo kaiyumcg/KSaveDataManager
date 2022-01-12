@@ -4,8 +4,5 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    internal static class Config
-    {
-        internal static SaveDataConfig data = null;
-    }
+    public enum AtomicSavePath { PersistentDataPath = 0, AppDataPath = 1 }
 }
