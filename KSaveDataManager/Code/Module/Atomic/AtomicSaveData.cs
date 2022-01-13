@@ -12,7 +12,7 @@ namespace KSaveDataMan
         private AtomicSaveData() { }
         internal static AtomicSaveData<T> CreateHandle(string[] identifiers)
         {
-            AtomicInternal.Check<T>(identifiers);
+            AtomicSaveInternalController.Check<T>(identifiers);
             var handle = new AtomicSaveData<T>();
             handle.keys = identifiers;
             return handle;
@@ -20,14 +20,14 @@ namespace KSaveDataMan
 
         public bool HasData()
         {
-            return AtomicInternal.HasData<T>(keys);
+            return AtomicSaveInternalController.HasData<T>(keys);
         }
 
         public T Value
         {
             get
             {
-                var st = AtomicInternal.GetAtomic<T>(keys);
+                var st = AtomicSaveInternalController.GetAtomic<T>(keys);
                 g_value = GetValueFromString(st);
                 return g_value;
             }
@@ -35,7 +35,7 @@ namespace KSaveDataMan
             {
                 var vl = value;
                 var st = ConvertValueToString(vl);
-                AtomicInternal.SetAtomic<T>(st, keys);
+                AtomicSaveInternalController.SetAtomic<T>(st, keys);
                 g_value = vl;
             }
         }
@@ -156,7 +156,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Bounds))
             {
                 Bounds res = default;
-                Bounds_Wrapper jsData = AtomUtil.GetDataFromJson<Bounds_Wrapper>(vl);
+                Bounds_Wrapper jsData = Util.GetDataFromJson<Bounds_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;   
@@ -166,7 +166,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(BoundsInt))
             {
                 BoundsInt res = default;
-                BoundsInt_Wrapper jsData = AtomUtil.GetDataFromJson<BoundsInt_Wrapper>(vl);
+                BoundsInt_Wrapper jsData = Util.GetDataFromJson<BoundsInt_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -176,7 +176,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(LayerMask))
             {
                 LayerMask res = default;
-                LayerMask_Wrapper jsData = AtomUtil.GetDataFromJson<LayerMask_Wrapper>(vl);
+                LayerMask_Wrapper jsData = Util.GetDataFromJson<LayerMask_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -186,7 +186,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Rect))
             {
                 Rect res = default;
-                Rect_Wrapper jsData = AtomUtil.GetDataFromJson<Rect_Wrapper>(vl);
+                Rect_Wrapper jsData = Util.GetDataFromJson<Rect_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -196,7 +196,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(RectInt))
             {
                 RectInt res = default;
-                RectInt_Wrapper jsData = AtomUtil.GetDataFromJson<RectInt_Wrapper>(vl);
+                RectInt_Wrapper jsData = Util.GetDataFromJson<RectInt_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -206,7 +206,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Vector2Int))
             {
                 Vector2Int res = default;
-                Vector2Int_Wrapper jsData = AtomUtil.GetDataFromJson<Vector2Int_Wrapper>(vl);
+                Vector2Int_Wrapper jsData = Util.GetDataFromJson<Vector2Int_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -216,7 +216,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Vector3Int))
             {
                 Vector3Int res = default;
-                Vector3Int_Wrapper jsData = AtomUtil.GetDataFromJson<Vector3Int_Wrapper>(vl);
+                Vector3Int_Wrapper jsData = Util.GetDataFromJson<Vector3Int_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = jsData.data;
@@ -226,7 +226,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Ray))
             {
                 Ray res = default;
-                Ray_Wrapper jsData = AtomUtil.GetDataFromJson<Ray_Wrapper>(vl);
+                Ray_Wrapper jsData = Util.GetDataFromJson<Ray_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = new Ray(jsData.rayOrigin, jsData.rayDirection);
@@ -236,7 +236,7 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Ray2D))
             {
                 Ray2D res = default;
-                Ray2D_Wrapper jsData = AtomUtil.GetDataFromJson<Ray2D_Wrapper>(vl);
+                Ray2D_Wrapper jsData = Util.GetDataFromJson<Ray2D_Wrapper>(vl);
                 if (jsData != null)
                 {
                     res = new Ray2D(jsData.rayOrigin, jsData.rayDirection);
@@ -246,73 +246,73 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(BoneWeight1))
             {
                 BoneWeight1 res;
-                res = AtomUtil.GetDataFromJson<BoneWeight1>(vl);
+                res = Util.GetDataFromJson<BoneWeight1>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(BoneWeight))
             {
                 BoneWeight res;
-                res = AtomUtil.GetDataFromJson<BoneWeight>(vl);
+                res = Util.GetDataFromJson<BoneWeight>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Color))
             {
                 Color res;
-                res = AtomUtil.GetDataFromJson<Color>(vl);
+                res = Util.GetDataFromJson<Color>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Color32))
             {
                 Color32 res;
-                res = AtomUtil.GetDataFromJson<Color32>(vl);
+                res = Util.GetDataFromJson<Color32>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(GradientAlphaKey))
             {
                 GradientAlphaKey res;
-                res = AtomUtil.GetDataFromJson<GradientAlphaKey>(vl);
+                res = Util.GetDataFromJson<GradientAlphaKey>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(GradientColorKey))
             {
                 GradientColorKey res;
-                res = AtomUtil.GetDataFromJson<GradientColorKey>(vl);
+                res = Util.GetDataFromJson<GradientColorKey>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(HumanPose))
             {
                 HumanPose res;
-                res = AtomUtil.GetDataFromJson<HumanPose>(vl);
+                res = Util.GetDataFromJson<HumanPose>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(RangeInt))
             {
                 RangeInt res;
-                res = AtomUtil.GetDataFromJson<RangeInt>(vl);
+                res = Util.GetDataFromJson<RangeInt>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Vector2))
             {
                 Vector2 res;
-                res = AtomUtil.GetDataFromJson<Vector2>(vl);
+                res = Util.GetDataFromJson<Vector2>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Vector3))
             {
                 Vector3 res;
-                res = AtomUtil.GetDataFromJson<Vector3>(vl);
+                res = Util.GetDataFromJson<Vector3>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Vector4))
             {
                 Vector4 res;
-                res = AtomUtil.GetDataFromJson<Vector4>(vl);
+                res = Util.GetDataFromJson<Vector4>(vl);
                 result = (T)(object)res;
             }
             else if (typeof(T) == typeof(Quaternion))
             {
                 Quaternion res;
-                res = AtomUtil.GetDataFromJson<Quaternion>(vl);
+                res = Util.GetDataFromJson<Quaternion>(vl);
                 result = (T)(object)res;
             }
             return result;

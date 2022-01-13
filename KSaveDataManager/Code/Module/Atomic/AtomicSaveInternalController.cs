@@ -6,12 +6,12 @@ using System.IO;
 
 namespace KSaveDataMan
 {
-    internal static class AtomicInternal
+    internal static class AtomicSaveInternalController
     {
-        static AtomicSaves_Internal saveInternal = null;
-        internal static AtomicSaves_Internal GetDefaultSave()
+        static AtomicSaveMasterData saveInternal = null;
+        internal static AtomicSaveMasterData GetDefaultSave()
         {
-            var sv = new AtomicSaves_Internal()
+            var sv = new AtomicSaveMasterData()
             {
                 buildGUID = Application.buildGUID,
                 companyName = Application.companyName,
@@ -40,31 +40,27 @@ namespace KSaveDataMan
                 SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
             }
 
-            if (AtomicInternal.saveInternal == null)
+            if (AtomicSaveInternalController.saveInternal == null)
             {
-                AtomicInternal.saveInternal = AtomicInternal.GetDefaultSave();
-                AtomicInternal.WriteToDevice();
-                AtomicInternal.LoadFromDevice();
+                AtomicSaveInternalController.LoadFromDevice();
             }
-
-            var str = "";
-            AtomUtil.SaveInternalOperation(ref saveInternal, ref str, keys, AtomicInternalOpMode.Creation, typeof(T).Name);
+            AtomUtil.TryCreateIfNotExist(ref saveInternal, keys, typeof(T).Name);
         }
 
-        internal static void WriteToDevice()
+        internal static void WriteMasterAtomicSaveDataToDevice()
         {
             var usePlayerPref = Config.data == null ? false : Config.data.UseUnityPlayerPrefForAtomic;
             if (usePlayerPref) { PlayerPrefs.Save(); }
             else
             {
-                if (AtomicInternal.saveInternal == null) 
+                if (AtomicSaveInternalController.saveInternal == null) 
                 {
-                    AtomicInternal.saveInternal = GetDefaultSave();
+                    AtomicSaveInternalController.saveInternal = GetDefaultSave();
                 }
                 string json = "";
                 try
                 {
-                    json = JsonUtility.ToJson(AtomicInternal.saveInternal);
+                    json = JsonUtility.ToJson(AtomicSaveInternalController.saveInternal);
                 }
                 catch (System.Exception ex)
                 {
@@ -83,7 +79,7 @@ namespace KSaveDataMan
                         key = Config.data.EncryptionConfig.KEY;
                         iv = Config.data.EncryptionConfig.IV;
                     }
-                    saveBytes = AtomUtil.EncryptIfReq(json, key, iv);
+                    saveBytes = CryptoUtil.EncryptIfSettingPermitsOtherwisePaintTxt(json, key, iv);
                 }
                 catch (System.Exception ex)
                 {
@@ -92,7 +88,7 @@ namespace KSaveDataMan
                         Debug.LogError("Byte conversion error. This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
                     }
                 }
-                var fPath = AtomUtil.GetAtomicSavePath();
+                var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
                 try
                 {
                     File.WriteAllBytes(fPath, saveBytes);
@@ -109,7 +105,7 @@ namespace KSaveDataMan
 
         internal static void LoadFromDevice()
         {
-            var fPath = AtomUtil.GetAtomicSavePath();
+            var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
             if (File.Exists(fPath))
             {
                 var saveBytes = File.ReadAllBytes(fPath);
@@ -120,13 +116,13 @@ namespace KSaveDataMan
                     key = Config.data.EncryptionConfig.KEY;
                     iv = Config.data.EncryptionConfig.IV;
                 }
-                var saveJson = AtomUtil.DecryptIfReq(saveBytes, key, iv);
-                saveInternal = AtomUtil.GetDataFromJson<AtomicSaves_Internal>(saveJson);
+                var saveJson = CryptoUtil.DecryptIfSettingPermitsOtherwisePaintTxt(saveBytes, key, iv);
+                saveInternal = Util.GetDataFromJson<AtomicSaveMasterData>(saveJson);
             }
             else
             {
                 saveInternal = GetDefaultSave();
-                WriteToDevice();
+                WriteMasterAtomicSaveDataToDevice();
             }
         }
 
@@ -135,41 +131,30 @@ namespace KSaveDataMan
             if (keys == null)
             {
                 saveInternal = GetDefaultSave();
-                WriteToDevice();
             }
             else
             {
-                var str = "";
-                AtomUtil.SaveInternalOperation(ref saveInternal, ref str, keys, AtomicInternalOpMode.Delete);
+                AtomUtil.TryDeleteIfExist(ref saveInternal, keys);
             }
+            WriteMasterAtomicSaveDataToDevice();
         }
 
         internal static string GetAtomic<T>(string[] keys)
         {
             Check<T>(keys);
             var result = "";
-            var str = "";
-            AtomUtil.SaveInternalOperation(ref saveInternal, ref str, keys, AtomicInternalOpMode.Read, typeof(T).Name);
-            if (string.IsNullOrEmpty(str))
+            if (Config.data != null && Config.data.EncryptionConfig != null && Config.data.EncryptionConfig.AtomicEncryptEachData)
             {
-                if (Config.data != null && Config.data.DebugMessage)
-                {
-                    Debug.LogWarning("There is no data for given key inside atomic save file. ");
-                }
+                var encryptedData = "";
+                AtomUtil.TryGetData(ref saveInternal, keys, ref encryptedData);
+                var sharedSecret = Config.data.EncryptionConfig.AtomicPerDataSharedSecret;
+                var salt = Config.data.EncryptionConfig.AtomicPerDataSalt;
+                var encoding = Config.data.EncryptionConfig.AtomicPerDataCredentialEncoding;
+                result = CryptoUtil.DecryptStringAES(encryptedData, sharedSecret, encoding, salt);
             }
             else
             {
-                var key = "";
-                var iv = "";
-                if (Config.data != null && Config.data.EncryptionConfig != null && Config.data.EncryptionConfig.EncryptEachData)
-                {
-                    key = Config.data.EncryptionConfig.UseDifferentCredentialForEachDataEncryption ? Config.data.EncryptionConfig.PerDataKey :
-                        Config.data.EncryptionConfig.KEY;
-                    iv = Config.data.EncryptionConfig.UseDifferentCredentialForEachDataEncryption ? Config.data.EncryptionConfig.PerDataIV :
-                        Config.data.EncryptionConfig.IV;
-                }
-                var b_str = AtomUtil.ConvertTo(str);
-                result = AtomUtil.DecryptIfReq(b_str, key, iv);
+                AtomUtil.TryGetData(ref saveInternal, keys, ref result);
             }
             return result;
         }
@@ -177,14 +162,7 @@ namespace KSaveDataMan
         internal static void SetAtomic<T>(string data, string[] keys)
         {
             Check<T>(keys);
-            //if its empty string, throw error if debugMessage is enabled
-            //if encryption setting is on per data then encrypt the data
-            //set into field for corresponding keys
-
-            var result = "";
-            var str = data;
-            AtomUtil.SaveInternalOperation(ref saveInternal, ref str, keys, AtomicInternalOpMode.Write, typeof(T).Name);
-            if (string.IsNullOrEmpty(str))
+            if (string.IsNullOrEmpty(data))
             {
                 if (Config.data != null && Config.data.DebugMessage)
                 {
@@ -193,27 +171,27 @@ namespace KSaveDataMan
             }
             else
             {
-                var key = "";
-                var iv = "";
-                if (Config.data != null && Config.data.EncryptionConfig != null && Config.data.EncryptionConfig.EncryptEachData)
+                if (Config.data != null && Config.data.EncryptionConfig != null && Config.data.EncryptionConfig.AtomicEncryptEachData)
                 {
-                    key = Config.data.EncryptionConfig.UseDifferentCredentialForEachDataEncryption ? Config.data.EncryptionConfig.PerDataKey :
-                        Config.data.EncryptionConfig.KEY;
-                    iv = Config.data.EncryptionConfig.UseDifferentCredentialForEachDataEncryption ? Config.data.EncryptionConfig.PerDataIV :
-                        Config.data.EncryptionConfig.IV;
+                    var sharedSecret = Config.data.EncryptionConfig.AtomicPerDataSharedSecret;
+                    var salt = Config.data.EncryptionConfig.AtomicPerDataSalt;
+                    var encoding = Config.data.EncryptionConfig.AtomicPerDataCredentialEncoding;
+                    var encryptedData = CryptoUtil.EncryptStringAES(data, sharedSecret, encoding, salt);
+                    AtomUtil.TrySetData(ref saveInternal, keys, typeof(T).Name, encryptedData);
                 }
-                var b_str = AtomUtil.ConvertTo(str);
-                var convData = AtomUtil.EncryptIfReq(data, key, iv);
+                else
+                {
+                    AtomUtil.TrySetData(ref saveInternal, keys, typeof(T).Name, data);
+                }
             }
         }
 
         internal static bool HasData<T>(string[] keys)
         {
             Check<T>(keys);
-            //there should be data against keys, if not then no data
-            //if there is data but the wrote flag is false then no data
-            //true otherwise
-            throw new System.NotImplementedException();
+            bool existed = false;
+            AtomUtil.TryCheckIfDataExist(ref saveInternal, keys, ref existed);
+            return existed;
         }
     }
 }

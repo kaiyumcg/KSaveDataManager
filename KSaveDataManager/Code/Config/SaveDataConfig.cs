@@ -13,10 +13,11 @@ namespace KSaveDataMan
         CloudConfig cloudConfig = null;
         EncodingType encodingType = EncodingType.ASCII;
         string atomicSaveFileName = "atom.sv";
+        string classSaveMasterFileName = "classSaveMaster.sv";
 #if UNITY_EDITOR
-        AtomicSavePath atomicSavePath = AtomicSavePath.AppDataPath;
+        SaveFilePathMode savePath = SaveFilePathMode.AppDataPath;
 #else
-        AtomicSavePath atomicSavePath = AtomicSavePath.PersistentDataPath;
+        SaveFilePathMode savePath = SaveFilePathMode.PersistentDataPath;
 #endif
         public bool DebugMessage { get { return debugMessage; } set { debugMessage = value; } }
         public bool JsonPettyPrint { get { return jsonPettyPrint; } set { jsonPettyPrint = value; } }
@@ -24,8 +25,9 @@ namespace KSaveDataMan
         public EncryptionConfig EncryptionConfig { get { return encryptionConfig; } set { encryptionConfig = value; } }
         public CloudConfig CloudConfig { get { return cloudConfig; } set { cloudConfig = value; } }
         public EncodingType _EncodingType { get { return encodingType; } set { encodingType = value; } }
-        public AtomicSavePath _AtomicSavePath { get { return atomicSavePath; } set { atomicSavePath = value; } }
+        public SaveFilePathMode SavePath { get { return savePath; } set { savePath = value; } }
         public string AtomicSaveFileName { get { return atomicSaveFileName; } set { atomicSaveFileName = value; } }
+        public string ClassSaveMasterFileName { get { return classSaveMasterFileName; } set { classSaveMasterFileName = value; } }
 
         public static EncryptionConfig CreateEncryptionConfig()
         {

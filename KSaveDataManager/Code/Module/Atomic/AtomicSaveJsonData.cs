@@ -5,6 +5,30 @@ using UnityEngine;
 namespace KSaveDataMan
 {
     [System.Serializable]
+    internal class AtomicSaveMasterData
+    {
+        [SerializeField] internal string gameName = "";
+        [SerializeField] internal string companyName = "";
+        [SerializeField] internal string platform = "";
+        [SerializeField] internal string buildGUID = "";
+        [SerializeField] internal bool genuine = true;
+        [SerializeField] internal string gameVer = "";
+        [SerializeField] internal string unityVer = "";
+        [SerializeField] internal string gameBundleID = "";
+        [SerializeField] internal EncodingType encoding = EncodingType.ASCII;
+        [SerializeField] internal AtomicSaveEachDataEntry[] data;
+    }
+
+    [System.Serializable]
+    internal class AtomicSaveEachDataEntry
+    {
+        [SerializeField] internal string[] keys;
+        [SerializeField] internal string value;
+        [SerializeField] internal bool game_wrote_it;
+        [SerializeField] internal string typeName;
+    }
+
+    [System.Serializable]
     internal class Ray_Wrapper
     {
         [SerializeField] internal Vector3 rayOrigin, rayDirection;

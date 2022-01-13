@@ -4,5 +4,5 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    public enum AtomicSavePath { PersistentDataPath = 0, AppDataPath = 1 }
+    public enum SaveFilePathMode { PersistentDataPath = 0, AppDataPath = 1 }
 }

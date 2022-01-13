@@ -5,7 +5,7 @@ using UnityEngine;
 namespace KSaveDataMan
 {
     [System.Serializable]
-    internal class AtomicSaves_Internal
+    internal class ClassSaveMasterData
     {
         [SerializeField] internal string gameName = "";
         [SerializeField] internal string companyName = "";
@@ -16,6 +16,13 @@ namespace KSaveDataMan
         [SerializeField] internal string unityVer = "";
         [SerializeField] internal string gameBundleID = "";
         [SerializeField] internal EncodingType encoding = EncodingType.ASCII;
-        [SerializeField] internal AtomicSaveString_Internal[] data;
+        [SerializeField] internal ClassSaveJsonLocator[] data;
+    }
+
+    [System.Serializable]
+    internal class ClassSaveJsonLocator
+    {
+        [SerializeField] internal string[] keys;
+        [SerializeField] internal string json_file_path;
     }
 }

@@ -19,7 +19,7 @@ namespace KSaveDataMan
                 SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
             }
             Config.data = config;
-            AtomicInternal.LoadFromDevice();
+            AtomicSaveInternalController.LoadFromDevice();
             //todo do cloud initialization stuffs
             //todo do any big data or small class data json initialization stuffs
             SaveState.systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
@@ -34,7 +34,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void DeleteAllData()
         {
-            AtomicInternal.DeleteData(null);
+            AtomicSaveInternalController.DeleteData(null);
             throw new System.NotImplementedException();
         }
 
@@ -46,7 +46,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the atomic data</param>
         public static void DeleteAtomic(params string[] identifiers)
         {
-            AtomicInternal.DeleteData(identifiers);
+            AtomicSaveInternalController.DeleteData(identifiers);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void SaveAtomicToDevice()
         {
-            AtomicInternal.WriteToDevice();
+            AtomicSaveInternalController.WriteMasterAtomicSaveDataToDevice();
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void LoadAtomicFromDevice()
         {
-            AtomicInternal.LoadFromDevice();
+            AtomicSaveInternalController.LoadFromDevice();
         }
 
         /// <summary>

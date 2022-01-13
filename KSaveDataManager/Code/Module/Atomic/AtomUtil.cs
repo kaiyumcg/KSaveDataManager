@@ -9,211 +9,121 @@ namespace KSaveDataMan
 {
     internal static class AtomUtil
     {
-        internal static T GetDataFromJson<T>(string json)
+        static bool CheckInInternal(ref AtomicSaveMasterData save, string[] keys, ref AtomicSaveEachDataEntry intSave,
+            bool deleteIfFound, bool createOneIfNotFound)
         {
-            T result = default;
-            try
+            List<AtomicSaveEachDataEntry> intSvList = new List<AtomicSaveEachDataEntry>();
+            if (deleteIfFound)
             {
-                result = JsonUtility.FromJson<T>(json);
-            }
-            catch (System.Exception ex)
-            {
-                if (Config.data != null && Config.data.DebugMessage)
+                if (save != null && save.data != null && save.data.Length > 0)
                 {
-                    Debug.LogWarning("Could not get data of type " + typeof(T) + " from json string. " +
-                        "Exception is thrown! Err message: " + ex.Message);
+                    var data = save.data;
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        intSvList.Add(data[i]);
+                    }
                 }
             }
-            return result;
+
+            var exist = false;
+            var len = keys == null ? 0 : keys.Length;
+            if (save != null && save.data != null && save.data.Length > 0)
+            {
+                var data = save.data;
+                for (int i = 0; i < data.Length; i++)
+                {
+                    var d = data[i];
+                    if (d.keys == null) { continue; }
+                    if (d.keys.Length != len) { continue; }
+                    var match = true;
+                    if (keys != null && keys.Length > 0)
+                    {
+                        for (int j = 0; j < keys.Length; j++)
+                        {
+                            var isThisAMatch = Array.Exists(d.keys, element => element == keys[j]);
+                            if (isThisAMatch == false)
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (match)
+                    {
+                        exist = true;
+                        intSave = data[i];
+                        if (deleteIfFound)
+                        {
+                            intSvList.Remove(data[i]);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (deleteIfFound)
+            {
+                save.data = intSvList.ToArray();
+            }
+            else if (createOneIfNotFound && exist == false)
+            {
+
+                var newSVString = new AtomicSaveEachDataEntry { game_wrote_it = false, keys = Util.CPY(keys), typeName = "", value = "" };
+                intSvList.Add(newSVString);
+                save.data = intSvList.ToArray();
+            }
+
+            return exist;
         }
 
-        //read mode simply update the data, write mode update the write flag as well as actual data inside
-        //delete mode removes the internal representation of data pointed by keys
-        //creation mode only works if the "search and find" actuall does not find any data in saveInternal
-        internal static void SaveInternalOperation(ref AtomicSaves_Internal _saveInternal, ref string data, string[] keys,
-            AtomicInternalOpMode mode, string typeName = "")
+        internal static void TryCreateIfNotExist(ref AtomicSaveMasterData saves_Internal, string[] keys, string typeName)
         {
-            
+            AtomicSaveEachDataEntry selSv = null;
+            var exist = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: true);
         }
 
-        internal static string GetAtomicSavePath()
+        internal static void TryDeleteIfExist(ref AtomicSaveMasterData saves_Internal, string[] keys)
+        {
+            AtomicSaveEachDataEntry selSv = null;
+            var exist = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: true, createOneIfNotFound: false);
+        }
+
+        internal static void TryCheckIfDataExist(ref AtomicSaveMasterData saves_Internal, string[] keys, ref bool exist)
+        {
+            AtomicSaveEachDataEntry selSv = null;
+            var existInInternal = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: false);
+            if (existInInternal == false) { exist = false; }
+            else if (existInInternal && selSv.game_wrote_it == false) { exist = false; }
+            else { exist = true; }
+        }
+
+        internal static void TryGetData(ref AtomicSaveMasterData saves_Internal, string[] keys, ref string data)
+        {
+            AtomicSaveEachDataEntry selSv = null;
+            var existInInternal = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: false);
+            if (existInInternal) { data = selSv.value; }
+            else { data = ""; }
+        }
+
+        internal static void TrySetData(ref AtomicSaveMasterData saves_Internal, string[] keys, string typeName, string data)
+        {
+            AtomicSaveEachDataEntry selSv = null;
+            var existInInternal = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: false);
+            if (existInInternal) { selSv.value = data; selSv.game_wrote_it = true; selSv.typeName = typeName; }
+        }
+
+        internal static string GetMasterAtomicSaveFilePath()
         {
             var saveFileName = "atom.sv";
             var saveDirectory = Application.persistentDataPath;
             if (Config.data != null && string.IsNullOrEmpty(Config.data.AtomicSaveFileName) == false)
             {
                 saveFileName = Config.data.AtomicSaveFileName;
-                saveDirectory = Config.data._AtomicSavePath == AtomicSavePath.AppDataPath ? Application.dataPath : Application.persistentDataPath;
+                saveDirectory = Config.data.SavePath == SaveFilePathMode.AppDataPath ? Application.dataPath : Application.persistentDataPath;
             }
             var fPath = Path.Combine(saveDirectory, saveFileName);
             return fPath;
-        }
-
-        internal static byte[] EncryptIfReq(string str, string key, string iv)
-        {
-            byte[] saveBytes = null;
-            var useEncryption = false;
-            if (Config.data != null && Config.data.EncryptionConfig != null)
-            {
-                useEncryption = true;
-            }
-
-            if (useEncryption)
-            {
-                saveBytes = CryptoUtil.EncryptStringToBytes(str, key, iv);
-            }
-            else
-            {
-                var encoding = EncodingType.ASCII;
-                if (Config.data != null) { encoding = Config.data._EncodingType; }
-                if (encoding == EncodingType.ASCII)
-                {
-                    saveBytes = Encoding.ASCII.GetBytes(str);
-                }
-                else if (encoding == EncodingType.BIG_ENDIAN)
-                {
-                    saveBytes = Encoding.BigEndianUnicode.GetBytes(str);
-                }
-                else if (encoding == EncodingType.UNICODE)
-                {
-                    saveBytes = Encoding.Unicode.GetBytes(str);
-                }
-                else if (encoding == EncodingType.UTF_32)
-                {
-                    saveBytes = Encoding.UTF32.GetBytes(str);
-                }
-                else if (encoding == EncodingType.UTF_7)
-                {
-                    saveBytes = Encoding.UTF7.GetBytes(str);
-                }
-                else if (encoding == EncodingType.UTF_8)
-                {
-                    saveBytes = Encoding.UTF8.GetBytes(str);
-                }
-            }
-            return saveBytes;
-        }
-
-        internal static byte[] ConvertTo(string str)
-        {
-            byte[] result = null;
-            var encoding = EncodingType.ASCII;
-            if (Config.data != null) { encoding = Config.data._EncodingType; }
-            if (encoding == EncodingType.ASCII)
-            {
-                result = Encoding.ASCII.GetBytes(str);
-            }
-            else if (encoding == EncodingType.BIG_ENDIAN)
-            {
-                result = Encoding.BigEndianUnicode.GetBytes(str);
-            }
-            else if (encoding == EncodingType.UNICODE)
-            {
-                result = Encoding.Unicode.GetBytes(str);
-            }
-            else if (encoding == EncodingType.UTF_32)
-            {
-                result = Encoding.UTF32.GetBytes(str);
-            }
-            else if (encoding == EncodingType.UTF_7)
-            {
-                result = Encoding.UTF7.GetBytes(str);
-            }
-            else if (encoding == EncodingType.UTF_8)
-            {
-                result = Encoding.UTF8.GetBytes(str);
-            }
-            else
-            {
-                if (Config.data != null && Config.data.DebugMessage)
-                {
-                    Debug.LogError("Unknown encoding!");
-                }
-            }
-            return result;
-        }
-
-        internal static string ConvertTo(byte[] data)
-        {
-            string result = null;
-            var encoding = EncodingType.ASCII;
-            if (Config.data != null) { encoding = Config.data._EncodingType; }
-            if (encoding == EncodingType.ASCII)
-            {
-                result = Encoding.ASCII.GetString(data, 0, data.Length);
-            }
-            else if (encoding == EncodingType.BIG_ENDIAN)
-            {
-                result = Encoding.BigEndianUnicode.GetString(data, 0, data.Length);
-            }
-            else if (encoding == EncodingType.UNICODE)
-            {
-                result = Encoding.Unicode.GetString(data, 0, data.Length);
-            }
-            else if (encoding == EncodingType.UTF_32)
-            {
-                result = Encoding.UTF32.GetString(data, 0, data.Length);
-            }
-            else if (encoding == EncodingType.UTF_7)
-            {
-                result = Encoding.UTF7.GetString(data, 0, data.Length);
-            }
-            else if (encoding == EncodingType.UTF_8)
-            {
-                result = Encoding.UTF8.GetString(data, 0, data.Length);
-            }
-            else
-            {
-                if (Config.data != null && Config.data.DebugMessage)
-                {
-                    Debug.LogError("Unknown encoding!");
-                }
-            }
-            return result;
-        }
-
-        internal static string DecryptIfReq(byte[] data, string key, string iv)
-        {
-            string result = "";
-            var useEncryption = false;
-            if (Config.data != null && Config.data.EncryptionConfig != null)
-            {
-                useEncryption = true;
-            }
-            if (useEncryption)
-            {
-                result = CryptoUtil.DecryptStringFromBytes(data, key, iv);
-            }
-            else
-            {
-                var encoding = EncodingType.ASCII;
-                if (Config.data != null) { encoding = Config.data._EncodingType; }
-                if (encoding == EncodingType.ASCII)
-                {
-                    result = Encoding.ASCII.GetString(data, 0, data.Length);
-                }
-                else if (encoding == EncodingType.BIG_ENDIAN)
-                {
-                    result = Encoding.BigEndianUnicode.GetString(data, 0, data.Length);
-                }
-                else if (encoding == EncodingType.UNICODE)
-                {
-                    result = Encoding.Unicode.GetString(data, 0, data.Length);
-                }
-                else if (encoding == EncodingType.UTF_32)
-                {
-                    result = Encoding.UTF32.GetString(data, 0, data.Length);
-                }
-                else if (encoding == EncodingType.UTF_7)
-                {
-                    result = Encoding.UTF7.GetString(data, 0, data.Length);
-                }
-                else if (encoding == EncodingType.UTF_8)
-                {
-                    result = Encoding.UTF8.GetString(data, 0, data.Length);
-                }
-            }
-            return result;
         }
     }
 }

@@ -25,12 +25,14 @@ namespace KSaveDataMan
 
         private void OnDestroy()
         {
-            AtomicInternal.WriteToDevice();
+            AtomicSaveInternalController.WriteMasterAtomicSaveDataToDevice();
+            ClassSave.WriteMasterClassSaveToDevice();
         }
 
         private void OnDisable()
         {
-            AtomicInternal.WriteToDevice();
+            AtomicSaveInternalController.WriteMasterAtomicSaveDataToDevice();
+            ClassSave.WriteMasterClassSaveToDevice();
         }
     }
 }
