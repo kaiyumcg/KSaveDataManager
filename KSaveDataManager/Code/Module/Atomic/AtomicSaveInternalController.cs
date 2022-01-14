@@ -8,125 +8,74 @@ namespace KSaveDataMan
 {
     internal static class AtomicSaveInternalController
     {
-        static AtomicSaveMasterData saveInternal = null;
-        internal static AtomicSaveMasterData GetDefaultSave()
+        static AtomicSaveMasterData masterSave = null;
+        internal static void EnsureMasterSave()
         {
-            var sv = new AtomicSaveMasterData()
+            if (masterSave == null)
             {
-                buildGUID = Application.buildGUID,
-                companyName = Application.companyName,
-                gameBundleID = Application.identifier,
-                gameName = Application.productName,
-                gameVer = Application.version,
-                unityVer = Application.unityVersion,
-                genuine = Application.genuine,
-                platform = Application.platform.ToString(),
-                encoding = EncodingType.ASCII,
-                data = null
-            };
-
-            if (Config.data != null)
-            {
-                sv.encoding = Config.data._EncodingType;
+                LoadMasterSaveToMemory();
+                WriteMasterSaveToDevice();
             }
-            return sv;
         }
 
-        internal static void Check<T>(string[] keys)
-        {
-            if (AtomicSaveInternalController.saveInternal == null)
-            {
-                AtomicSaveInternalController.LoadFromDevice();
-            }
-            AtomUtil.TryCreateIfNotExist(ref saveInternal, keys, typeof(T).Name);
-        }
-
-        internal static void WriteMasterSave()
+        internal static void WriteMasterSaveToDevice()
         {
             var usePlayerPref = Config.data == null ? false : Config.data.UseUnityPlayerPrefForAtomic;
             if (usePlayerPref) { PlayerPrefs.Save(); }
             else
             {
-                if (AtomicSaveInternalController.saveInternal == null) 
+                if (masterSave == null) 
                 {
-                    AtomicSaveInternalController.saveInternal = GetDefaultSave();
+                    masterSave = Util.GetDefaultMasterSave<AtomicSaveMasterData>();
+                    masterSave.data = null;
                 }
-                string json = "";
-                try
-                {
-                    json = JsonUtility.ToJson(AtomicSaveInternalController.saveInternal);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage) 
-                    { 
-                        Debug.LogError("Can not convert the save data into json. Exception message: " + ex.Message); 
-                    }
-                }
-                byte[] saveBytes = null;
-                try
-                {
-                    saveBytes = CryptoUtil.EncryptIfRequired(json);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage)
-                    {
-                        Debug.LogError("Byte conversion error. This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
-                    }
-                }
-                var fPath = AtomUtil.GetMasterSaveFilePath();
-                try
-                {
-                    File.WriteAllBytes(fPath, saveBytes);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage)
-                    {
-                        Debug.LogError("Can not write the atomic save file into disk! Exception message: " + ex.Message);
-                    }
-                }
+                string json = Util.GetDataAsJsonString(masterSave);
+                byte[] saveBytes = CryptoUtil.EncryptIfRequired(json);
+                var fPath = Util.GetMasterAtomicSaveFilePath();
+                FileWriteUtil.WriteData(saveBytes, fPath);
             }
         }
 
-        internal static void LoadFromDevice()
+        internal static void LoadMasterSaveToMemory()
         {
-            var fPath = AtomUtil.GetMasterSaveFilePath();
+            var fPath = Util.GetMasterAtomicSaveFilePath();
             if (File.Exists(fPath))
             {
-                var saveBytes = File.ReadAllBytes(fPath);
+                var saveBytes = FileLoadUtil.LoadData(fPath);
                 var saveJson = CryptoUtil.DecryptIfRequired(saveBytes);
-                saveInternal = Util.GetDataFromJson<AtomicSaveMasterData>(saveJson);
+                masterSave = Util.GetDataFromJson<AtomicSaveMasterData>(saveJson);
             }
             else
             {
-                saveInternal = GetDefaultSave();
-                WriteMasterSave();
+                masterSave = Util.GetDefaultMasterSave<AtomicSaveMasterData>();
+                masterSave.data = null;
+                WriteMasterSaveToDevice();
             }
         }
 
-        internal static void DeleteData(string[] keys)
+        internal static void Clear(string[] keys)
         {
             if (keys == null)
             {
-                saveInternal = GetDefaultSave();
+                masterSave = Util.GetDefaultMasterSave<AtomicSaveMasterData>();
+                masterSave.data = null;
             }
             else
             {
-                AtomUtil.TryDeleteIfExist(ref saveInternal, keys);
+                AtomUtil.TryDeleteIfExist(ref masterSave, keys);
             }
-            WriteMasterSave();
+            WriteMasterSaveToDevice();
         }
 
         internal static string GetAtomic<T>(string[] keys)
         {
-            Check<T>(keys);
+            EnsureMasterSave();
+            AtomUtil.TryCreateIfNotExist(ref masterSave, keys, typeof(T).Name);
             var result = "";
             if (Config.data != null && Config.data.EncryptionConfig != null && Config.data.EncryptionConfig.AtomicEncryptEachData)
             {
                 var encryptedData = "";
-                AtomUtil.TryGetData(ref saveInternal, keys, ref encryptedData);
+                AtomUtil.TryGetData(ref masterSave, keys, ref encryptedData);
                 var sharedSecret = Config.data.EncryptionConfig.AtomicPerDataSharedSecret;
                 var salt = Config.data.EncryptionConfig.AtomicPerDataSalt;
                 var encoding = Config.data.EncryptionConfig.AtomicPerDataCredentialEncoding;
@@ -134,14 +83,15 @@ namespace KSaveDataMan
             }
             else
             {
-                AtomUtil.TryGetData(ref saveInternal, keys, ref result);
+                AtomUtil.TryGetData(ref masterSave, keys, ref result);
             }
             return result;
         }
 
         internal static void SetAtomic<T>(string data, string[] keys)
         {
-            Check<T>(keys);
+            EnsureMasterSave();
+            AtomUtil.TryCreateIfNotExist(ref masterSave, keys, typeof(T).Name);
             if (string.IsNullOrEmpty(data))
             {
                 if (Config.data != null && Config.data.DebugMessage)
@@ -157,20 +107,20 @@ namespace KSaveDataMan
                     var salt = Config.data.EncryptionConfig.AtomicPerDataSalt;
                     var encoding = Config.data.EncryptionConfig.AtomicPerDataCredentialEncoding;
                     var encryptedData = CryptoUtil.EncryptStringAES(data, sharedSecret, encoding, salt);
-                    AtomUtil.TrySetData(ref saveInternal, keys, typeof(T).Name, encryptedData);
+                    AtomUtil.TrySetData(ref masterSave, keys, typeof(T).Name, encryptedData);
                 }
                 else
                 {
-                    AtomUtil.TrySetData(ref saveInternal, keys, typeof(T).Name, data);
+                    AtomUtil.TrySetData(ref masterSave, keys, typeof(T).Name, data);
                 }
             }
         }
 
         internal static bool HasData<T>(string[] keys)
         {
-            Check<T>(keys);
+            EnsureMasterSave();
             bool existed = false;
-            AtomUtil.TryCheckIfDataExist(ref saveInternal, keys, ref existed);
+            AtomUtil.TryCheckIfDataExist(ref masterSave, keys, ref existed);
             return existed;
         }
     }

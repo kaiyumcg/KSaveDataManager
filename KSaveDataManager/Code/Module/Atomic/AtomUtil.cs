@@ -80,13 +80,13 @@ namespace KSaveDataMan
         internal static void TryCreateIfNotExist(ref AtomicSaveMasterData saves_Internal, string[] keys, string typeName)
         {
             AtomicSaveEachDataEntry selSv = null;
-            var exist = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: true);
+            CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: true);
         }
 
         internal static void TryDeleteIfExist(ref AtomicSaveMasterData saves_Internal, string[] keys)
         {
             AtomicSaveEachDataEntry selSv = null;
-            var exist = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: true, createOneIfNotFound: false);
+            CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: true, createOneIfNotFound: false);
         }
 
         internal static void TryCheckIfDataExist(ref AtomicSaveMasterData saves_Internal, string[] keys, ref bool exist)
@@ -111,19 +111,6 @@ namespace KSaveDataMan
             AtomicSaveEachDataEntry selSv = null;
             var existInInternal = CheckInInternal(ref saves_Internal, keys, ref selSv, deleteIfFound: false, createOneIfNotFound: false);
             if (existInInternal) { selSv.value = data; selSv.game_wrote_it = true; selSv.typeName = typeName; }
-        }
-
-        internal static string GetMasterSaveFilePath()
-        {
-            var saveFileName = "atom.sv";
-            var saveDirectory = Application.persistentDataPath;
-            if (Config.data != null && string.IsNullOrEmpty(Config.data.AtomicSaveFileName) == false)
-            {
-                saveFileName = Config.data.AtomicSaveFileName;
-                saveDirectory = Config.data.SavePath == SaveFilePathMode.AppDataPath ? Application.dataPath : Application.persistentDataPath;
-            }
-            var fPath = Path.Combine(saveDirectory, saveFileName);
-            return fPath;
         }
 
         internal static T GetValueFromString<T>(string vl) where T : struct

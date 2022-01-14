@@ -5,133 +5,167 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    /// <summary>
-    /// Three operations: clear, save, load with string[] keys
-    /// At the begining of each we do a sync Check operation so that internal master data is available
-    /// Then we find json locator for typeName and keys.
-    /// Then for clear-->If locator is not found, ignore further
-    /// Then for save-->If we find json locator, overwrite the byte array in the file path async way. 
-    ///                 If not found, create a locator in master data and the write byte array in file path async way.
-    /// Then for load-->If we find json locator, we load byte array from device using file path in locator. 
-    ///                 For valid byte array, we cast it to actual data using Json util of unity. Otherwise a null is returned.
-    ///              -->If not found, create a locator in master data and save a default valued json in file path with byte array
-    /// </summary>
     internal static class ClassSave
     {
         static ClassSaveMasterData masterSave = null;
-
-        static ClassSaveMasterData GetDefaultMasterSave()
-        {
-            var sv = new ClassSaveMasterData()
-            {
-                buildGUID = Application.buildGUID,
-                companyName = Application.companyName,
-                gameBundleID = Application.identifier,
-                gameName = Application.productName,
-                gameVer = Application.version,
-                unityVer = Application.unityVersion,
-                genuine = Application.genuine,
-                platform = Application.platform.ToString(),
-                encoding = EncodingType.ASCII,
-                data = null
-            };
-
-            if (Config.data != null)
-            {
-                sv.encoding = Config.data._EncodingType;
-            }
-            return sv;
-        }
-
         static void EnsureMasterSave()
         {
             if (masterSave == null)
             {
-                LoadMasterSave();
-                WriteMasterSave();
-            }
-
-            void LoadMasterSave()
-            {
-                var fPath = ClassSaveUtil.GetMasterSaveFilePath();
-                if (File.Exists(fPath))
-                {
-                    var saveBytes = File.ReadAllBytes(fPath);
-                    var masterSaveJson = CryptoUtil.DecryptIfRequired(saveBytes);
-                    masterSave = Util.GetDataFromJson<ClassSaveMasterData>(masterSaveJson);
-                }
-                else
-                {
-                    masterSave = GetDefaultMasterSave();
-                }
+                LoadMasterSaveToMemory();
+                WriteMasterSaveToDevice();
             }
         }
 
-        internal static void WriteMasterSave()
+        internal static void LoadMasterSaveToMemory()
+        {
+            var fPath = Util.GetMasterClassSaveFilePath();
+            if (File.Exists(fPath))
+            {
+                var saveBytes = FileLoadUtil.LoadData(fPath);
+                var masterSaveJson = CryptoUtil.DecryptIfRequired(saveBytes);
+                masterSave = Util.GetDataFromJson<ClassSaveMasterData>(masterSaveJson);
+            }
+            else
+            {
+                masterSave = Util.GetDefaultMasterSave<ClassSaveMasterData>();
+                masterSave.data = null;
+            }
+        }
+
+        internal static void WriteMasterSaveToDevice()
         {
             if (masterSave == null)
             {
-                masterSave = GetDefaultMasterSave();
+                masterSave = Util.GetDefaultMasterSave<ClassSaveMasterData>();
+                masterSave.data = null;
             }
-            string json = "";
-            try
-            {
-                json = JsonUtility.ToJson(masterSave);
-            }
-            catch (System.Exception ex)
-            {
-                if (Config.data != null && Config.data.DebugMessage)
-                {
-                    Debug.LogError("Can not convert the master save data for class save into json. Exception message: " + ex.Message);
-                }
-            }
+            string json = Util.GetDataAsJsonString(masterSave);
+            byte[] saveBytes = CryptoUtil.EncryptIfRequired(json);
+            var fPath = Util.GetMasterClassSaveFilePath();
+            FileWriteUtil.WriteData(saveBytes, fPath);
+        }
 
-            byte[] saveBytes = null;
-            try
+        static bool IsLocatorMatching(LocatorForMasterSaveData locator, string[] compKeys, string typeName, bool considerTypeName)
+        {
+            return Util.AreBothSame(compKeys, locator.keys, typeName, locator.typeName, considerTypeName);
+        }
+
+        static void FindLocatorFor<T>(string[] keys, ref LocatorForMasterSaveData locator, bool considerTypeName = true)
+        {
+            locator = null;
+            if (masterSave != null && masterSave.data != null && masterSave.data.Length > 0)
             {
-                saveBytes = CryptoUtil.EncryptIfRequired(json);
-            }
-            catch (System.Exception ex)
-            {
-                if (Config.data != null && Config.data.DebugMessage)
+                for (int i = 0; i < masterSave.data.Length; i++)
                 {
-                    Debug.LogError("Byte conversion error during class save master data write to device. " +
-                        "This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
-                }
-            }
-            var fPath = ClassSaveUtil.GetMasterSaveFilePath();
-            try
-            {
-                File.WriteAllBytes(fPath, saveBytes);
-            }
-            catch (System.Exception ex)
-            {
-                if (Config.data != null && Config.data.DebugMessage)
-                {
-                    Debug.LogError("Can not write the class master save file into disk! Exception message: " + ex.Message);
+                    var data = masterSave.data[i];
+                    if (data == null) { continue; }
+                    var fetch = IsLocatorMatching(data, keys, typeof(T).Name, considerTypeName);
+                    if (fetch)
+                    {
+                        locator = data;
+                        break;
+                    }
                 }
             }
         }
 
-        internal static void Clear(string[] keys, System.Action<LocalDataCode> OnComplete)
+        internal static void Clear(string[] keys)
         {
             EnsureMasterSave();
+            List<LocatorForMasterSaveData> locators = new List<LocatorForMasterSaveData>();
+            var keyLen = keys == null ? 0 : keys.Length;
+            var allClean = keys == null || keyLen == 0;
             if (masterSave != null && masterSave.data != null && masterSave.data.Length > 0)
             {
-                
+                for (int i = 0; i < masterSave.data.Length; i++)
+                {
+                    var data = masterSave.data[i];
+                    if (data == null) { continue; }
+                    var deleteIt = allClean ? true : IsLocatorMatching(data, keys, "", considerTypeName: false);
+                    if (deleteIt)
+                    {
+                        var fPath = data.value;
+                        if (File.Exists(fPath))
+                        {
+                            File.Delete(fPath);
+                        }
+                    }
+                    else
+                    {
+                        locators.Add(data);
+                    }
+                }
             }
+
+            if (allClean)
+            {
+                masterSave = Util.GetDefaultMasterSave<ClassSaveMasterData>();
+                masterSave.data = null;
+            }
+            else
+            {
+                masterSave.data = locators.ToArray();
+            }
+            WriteMasterSaveToDevice();
         }
 
         internal static void Load<T>(string[] keys, System.Action<LocalDataCode, T> OnComplete)
         {
             EnsureMasterSave();
-
+            LocatorForMasterSaveData sel = null;
+            FindLocatorFor<T>(keys, ref sel);
+            if (sel == null)
+            {
+                OnComplete?.Invoke(LocalDataCode.NotFound, default);
+            }
+            else
+            {
+                var fPath = sel.value;
+                FileLoadUtil.LoadDataAsync(fPath, (success, jSave) =>
+                {
+                    if (success)
+                    {
+                        var json = CryptoUtil.DecryptIfRequired(jSave);
+                        var result = Util.GetDataFromJson<T>(json);
+                        OnComplete?.Invoke(result == null ? LocalDataCode.ConversionError : LocalDataCode.Success, result);
+                    }
+                    else
+                    {
+                        OnComplete?.Invoke(LocalDataCode.DiskLoadError, default);
+                    }
+                });
+            }
         }
 
         internal static void Save<T>(T data, string[] keys, System.Action<LocalDataCode> OnComplete)
         {
             EnsureMasterSave();
+            LocatorForMasterSaveData sel = null;
+            FindLocatorFor<T>(keys, ref sel);
+            if (sel == null)
+            {
+                var fName = Util.GetKeyedRandomName(keys) + ".SVJ";
+                var saveDir = Util.GetSaveDirectory();
+                sel = new LocatorForMasterSaveData
+                {
+                    value = Path.Combine(saveDir, fName),
+                    keys = Util.CPY(keys),
+                    typeName = typeof(T).Name
+                };
+                List<LocatorForMasterSaveData> currentLocators = new List<LocatorForMasterSaveData>();
+                currentLocators.AddRange(masterSave.data);
+                currentLocators.Add(sel);
+                masterSave.data = currentLocators.ToArray();
+            }
 
+            var json = Util.GetDataAsJsonString(data);
+            var wBytes = CryptoUtil.EncryptIfRequired(json);
+            FileWriteUtil.WriteDataAsync(wBytes, sel.value, (success) =>
+            {
+                OnComplete?.Invoke(success ? LocalDataCode.Success : LocalDataCode.DiskWriteError);
+            });
+            WriteMasterSaveToDevice();
         }
     }
 }

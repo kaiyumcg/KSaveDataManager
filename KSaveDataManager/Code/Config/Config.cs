@@ -53,7 +53,7 @@ namespace KSaveDataMan
         public CloudConfig CloudConfig { get { return cloudConfig; } set { cloudConfig = value; } }
         public EncodingType _EncodingType { get { return encodingType; } set { encodingType = value; } }
         public SaveFilePathMode SavePath { get { return savePath; } set { savePath = value; } }
-        public string AtomicSaveFileName { get { return atomicSaveFileName; } set { atomicSaveFileName = value; } }
+        public string AtomicMasterSaveFileName { get { return atomicSaveFileName; } set { atomicSaveFileName = value; } }
         public string ClassSaveMasterFileName { get { return classSaveMasterFileName; } set { classSaveMasterFileName = value; } }
 
         public static EncryptionConfig CreateEncryptionConfig()

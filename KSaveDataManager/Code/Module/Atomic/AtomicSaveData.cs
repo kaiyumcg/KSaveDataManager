@@ -12,7 +12,7 @@ namespace KSaveDataMan
         private AtomicSaveData() { }
         internal static AtomicSaveData<T> CreateHandle(string[] identifiers)
         {
-            AtomicSaveInternalController.Check<T>(identifiers);
+            AtomicSaveInternalController.EnsureMasterSave();
             var handle = new AtomicSaveData<T>();
             handle.keys = identifiers;
             return handle;

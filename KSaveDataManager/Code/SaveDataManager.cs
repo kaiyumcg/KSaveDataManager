@@ -10,9 +10,8 @@ namespace KSaveDataMan
         public static bool IsInitialized { get { return systemInitialised; } }
         public static System.Action OnInitialized;
         public static UnityEvent OnInitializedEvent;
-        static SaveDataOperationManager operationManager = null;
+        internal static SaveDataOperationManager operationManager = null;
         static bool systemInitialised = false;
-
         static void CheckManager()
         {
             if (operationManager == null)
@@ -22,11 +21,20 @@ namespace KSaveDataMan
             }
         }
 
+        static void CheckInitOfSys()
+        {
+            if (IsInitialized == false && Config.data != null && Config.data.DebugMessage)
+            {
+                Debug.LogError("You must initialized the save data manager first to use any of it's feature!");
+            }
+        }
+
         public static void InitSystem(SaveDataConfig config, System.Action OnComplete = null)
         {
             CheckManager();
             Config.data = config;
-            AtomicSaveInternalController.LoadFromDevice();
+            AtomicSaveInternalController.LoadMasterSaveToMemory();
+            ClassSave.LoadMasterSaveToMemory();
             //todo do cloud initialization stuffs
             //todo do any big data or small class data json initialization stuffs
             systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
@@ -41,9 +49,10 @@ namespace KSaveDataMan
         /// </summary>
         public static void DeleteAllData()
         {
+            CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.DeleteData(null);
-            throw new System.NotImplementedException();
+            AtomicSaveInternalController.Clear(null);
+            ClassSave.Clear(null);
         }
 
         #region Atomic
@@ -54,8 +63,9 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the atomic data</param>
         public static void DeleteAtomic(params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.DeleteData(identifiers);
+            AtomicSaveInternalController.Clear(identifiers);
         }
 
         /// <summary>
@@ -64,8 +74,9 @@ namespace KSaveDataMan
         /// </summary>
         public static void SaveAtomicToDevice()
         {
+            CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.WriteMasterSave();
+            AtomicSaveInternalController.WriteMasterSaveToDevice();
         }
 
         /// <summary>
@@ -74,8 +85,9 @@ namespace KSaveDataMan
         /// </summary>
         public static void LoadAtomicFromDevice()
         {
+            CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.LoadFromDevice();
+            AtomicSaveInternalController.LoadMasterSaveToMemory();
         }
 
         /// <summary>
@@ -88,6 +100,7 @@ namespace KSaveDataMan
         /// <returns></returns>
         public static AtomicSaveData<T> GetOrCreateAtomic<T>(params string[] identifiers) where T : struct
         {
+            CheckInitOfSys();
             CheckManager();
             return AtomicSaveData<T>.CreateHandle(identifiers);
         }
@@ -100,8 +113,9 @@ namespace KSaveDataMan
         /// </summary>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle ClearBigLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
+        public static void ClearBigLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
@@ -114,8 +128,9 @@ namespace KSaveDataMan
         /// <param name="data">Byte array data</param>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle SaveBigDataToDevice(byte[] data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
+        public static void SaveBigDataToDevice(byte[] data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
@@ -126,8 +141,9 @@ namespace KSaveDataMan
         /// </summary>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle LoadBigDataFromDevice(System.Action<LocalDataCode, byte[]> OnComplete, params string[] identifiers)
+        public static void LoadBigDataFromDevice(System.Action<LocalDataCode, byte[]> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
@@ -135,43 +151,48 @@ namespace KSaveDataMan
 
         #region SmallClassOrStructData
         /// <summary>
-        /// Permanently deletes all data identified by all[NOT just any but 'all'] the 'identifier's.
-        /// <para>If no identifiers are provided then this will permanently delete all local data</para>
+        /// Permanently deletes all data identified by all the 'identifier's. 
+        /// <para>If no identifiers are provided then this will permanently delete all local class/struct data</para>
+        /// <para>Only work for the data that is possible to serialize/deserialize by unity </para>
         /// </summary>
-        /// <param name="OnComplete">Operation completion callback</param>
-        /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle ClearLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
+        /// <param name="identifiers">List of labels attributed to the class data</param>
+        public static void ClearLocalData(params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();
+            ClassSave.Clear(identifiers);
         }
 
         /// <summary>
         /// Store the data into device storage with 'identifier's.
-        /// <para>If there is any data present with 'all' 'identifiers', then this will overwrite the local data.</para>
+        /// <para>If there is any data present with 'all' 'identifiers', then this will overwrite the local class/struct data.</para>
         /// <para>Otherwise it will create a new data in the local storage.</para>
+        /// <para>Only work for the data that is possible to serialize/deserialize by unity </para>
         /// </summary>
         /// <typeparam name="T">Data Type</typeparam>
         /// <param name="data">Data</param>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle SaveDataToDevice<T>(T data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
+        public static void SaveDataToDevice<T>(T data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();
+            ClassSave.Save(data, identifiers, OnComplete);
         }
 
         /// <summary>
         /// Loads the local data into memory with 'identifier's.
         /// <para>If no such data with identifiers are present, default or null will be given in the callback</para>
+        /// <para>Only work for the data that is possible to serialize/deserialize by unity </para>
         /// </summary>
         /// <typeparam name="T">Data type</typeparam>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle LoadDataFromDevice<T>(System.Action<LocalDataCode, T> OnComplete, params string[] identifiers)
+        public static void LoadDataFromDevice<T>(System.Action<LocalDataCode, T> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();   
+            ClassSave.Load(identifiers, OnComplete);
         }
         #endregion
 
@@ -182,8 +203,9 @@ namespace KSaveDataMan
         /// </summary>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle ClearCloudData(System.Action<CloudDataCode> OnComplete, params string[] identifiers)
+        public static void ClearCloudData(System.Action<CloudDataCode> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
@@ -197,8 +219,9 @@ namespace KSaveDataMan
         /// <param name="data">Data</param>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle SaveDataToCloud<T>(T data, System.Action<CloudDataCode> OnComplete, params string[] identifiers)
+        public static void SaveDataToCloud<T>(T data, System.Action<CloudDataCode> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
@@ -210,8 +233,9 @@ namespace KSaveDataMan
         /// <typeparam name="T">Data type</typeparam>
         /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static AsyncDataOpHandle LoadDataFromCloud<T>(System.Action<CloudDataCode, T> OnComplete, params string[] identifiers)
+        public static void LoadDataFromCloud<T>(System.Action<CloudDataCode, T> OnComplete, params string[] identifiers)
         {
+            CheckInitOfSys();
             CheckManager();
             throw new System.NotImplementedException();
         }
