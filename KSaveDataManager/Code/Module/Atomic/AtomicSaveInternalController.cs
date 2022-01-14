@@ -34,12 +34,6 @@ namespace KSaveDataMan
 
         internal static void Check<T>(string[] keys)
         {
-            if (SaveState.operationManager == null)
-            {
-                var g = new GameObject("_SaveDataOperationManager_Gen_");
-                SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
-            }
-
             if (AtomicSaveInternalController.saveInternal == null)
             {
                 AtomicSaveInternalController.LoadFromDevice();
@@ -47,7 +41,7 @@ namespace KSaveDataMan
             AtomUtil.TryCreateIfNotExist(ref saveInternal, keys, typeof(T).Name);
         }
 
-        internal static void WriteMasterAtomicSaveDataToDevice()
+        internal static void WriteMasterSave()
         {
             var usePlayerPref = Config.data == null ? false : Config.data.UseUnityPlayerPrefForAtomic;
             if (usePlayerPref) { PlayerPrefs.Save(); }
@@ -72,14 +66,7 @@ namespace KSaveDataMan
                 byte[] saveBytes = null;
                 try
                 {
-                    var key = "";
-                    var iv = "";
-                    if (Config.data != null && Config.data.EncryptionConfig != null) 
-                    { 
-                        key = Config.data.EncryptionConfig.KEY;
-                        iv = Config.data.EncryptionConfig.IV;
-                    }
-                    saveBytes = CryptoUtil.EncryptIfSettingPermitsOtherwisePaintTxt(json, key, iv);
+                    saveBytes = CryptoUtil.EncryptIfRequired(json);
                 }
                 catch (System.Exception ex)
                 {
@@ -88,7 +75,7 @@ namespace KSaveDataMan
                         Debug.LogError("Byte conversion error. This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
                     }
                 }
-                var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
+                var fPath = AtomUtil.GetMasterSaveFilePath();
                 try
                 {
                     File.WriteAllBytes(fPath, saveBytes);
@@ -105,24 +92,17 @@ namespace KSaveDataMan
 
         internal static void LoadFromDevice()
         {
-            var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
+            var fPath = AtomUtil.GetMasterSaveFilePath();
             if (File.Exists(fPath))
             {
                 var saveBytes = File.ReadAllBytes(fPath);
-                var key = "";
-                var iv = "";
-                if (Config.data != null && Config.data.EncryptionConfig != null)
-                {
-                    key = Config.data.EncryptionConfig.KEY;
-                    iv = Config.data.EncryptionConfig.IV;
-                }
-                var saveJson = CryptoUtil.DecryptIfSettingPermitsOtherwisePaintTxt(saveBytes, key, iv);
+                var saveJson = CryptoUtil.DecryptIfRequired(saveBytes);
                 saveInternal = Util.GetDataFromJson<AtomicSaveMasterData>(saveJson);
             }
             else
             {
                 saveInternal = GetDefaultSave();
-                WriteMasterAtomicSaveDataToDevice();
+                WriteMasterSave();
             }
         }
 
@@ -136,7 +116,7 @@ namespace KSaveDataMan
             {
                 AtomUtil.TryDeleteIfExist(ref saveInternal, keys);
             }
-            WriteMasterAtomicSaveDataToDevice();
+            WriteMasterSave();
         }
 
         internal static string GetAtomic<T>(string[] keys)

@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    internal static class SmallClassUtil
+    internal static class ClassSaveUtil
     {
-        internal static string GetClassSaveMasterFilePath()
+        internal static string GetMasterSaveFilePath()
         {
             var saveFileName = "classSaveMaster.sv";
             var saveDirectory = Application.persistentDataPath;

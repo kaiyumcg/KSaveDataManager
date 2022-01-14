@@ -1,17 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace KSaveDataMan
 {
-    //On load operation:-->check if master is in memory, if not create one and insert "keyed default T json" data to it and write it to device
-    //if master is present in memory then check if "keyed default T json exist", if exist load it async with async file writer
-    //otherwise create a fresh one and save it into disk
+    /// <summary>
+    /// Three operations: clear, save, load with string[] keys
+    /// At the begining of each we do a sync Check operation so that internal master data is available
+    /// Then we find json locator for typeName and keys.
+    /// Then for clear-->If locator is not found, ignore further
+    /// Then for save-->If we find json locator, overwrite the byte array in the file path async way. 
+    ///                 If not found, create a locator in master data and the write byte array in file path async way.
+    /// Then for load-->If we find json locator, we load byte array from device using file path in locator. 
+    ///                 For valid byte array, we cast it to actual data using Json util of unity. Otherwise a null is returned.
+    ///              -->If not found, create a locator in master data and save a default valued json in file path with byte array
+    /// </summary>
     internal static class ClassSave
     {
-        internal static ClassSaveMasterData classSaveInternal = null;
+        static ClassSaveMasterData masterSave = null;
 
-        internal static ClassSaveMasterData GetDefaultSave()
+        static ClassSaveMasterData GetDefaultMasterSave()
         {
             var sv = new ClassSaveMasterData()
             {
@@ -34,103 +43,95 @@ namespace KSaveDataMan
             return sv;
         }
 
-        static void Check<T>(string[] keys)
+        static void EnsureMasterSave()
         {
-            if (SaveState.operationManager == null)
+            if (masterSave == null)
             {
-                var g = new GameObject("_SaveDataOperationManager_Gen_");
-                SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
+                LoadMasterSave();
+                WriteMasterSave();
             }
 
-            if (ClassSave.classSaveInternal == null)
+            void LoadMasterSave()
             {
-                AtomicSaveInternalController.LoadFromDevice();
-            }
-            TryCreateIfNotExist(ref classSaveInternal, keys);
-        }
-
-        static void TryCreateIfNotExist(ref ClassSaveMasterData saves_Internal, string[] keys)
-        {
-            
-        }
-
-        internal static void WriteMasterClassSaveToDevice()
-        {
-            var usePlayerPref = Config.data == null ? false : Config.data.UseUnityPlayerPrefForAtomic;
-            if (usePlayerPref) { PlayerPrefs.Save(); }
-            else
-            {
-                if (ClassSave.saveInternal == null)
+                var fPath = ClassSaveUtil.GetMasterSaveFilePath();
+                if (File.Exists(fPath))
                 {
-                    ClassSave.saveInternal = GetDefaultSave();
+                    var saveBytes = File.ReadAllBytes(fPath);
+                    var masterSaveJson = CryptoUtil.DecryptIfRequired(saveBytes);
+                    masterSave = Util.GetDataFromJson<ClassSaveMasterData>(masterSaveJson);
                 }
-                string json = "";
-                try
+                else
                 {
-                    json = JsonUtility.ToJson(AtomicSaveInternalController.saveInternal);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage)
-                    {
-                        Debug.LogError("Can not convert the save data into json. Exception message: " + ex.Message);
-                    }
-                }
-                byte[] saveBytes = null;
-                try
-                {
-                    var key = "";
-                    var iv = "";
-                    if (Config.data != null && Config.data.EncryptionConfig != null)
-                    {
-                        key = Config.data.EncryptionConfig.KEY;
-                        iv = Config.data.EncryptionConfig.IV;
-                    }
-                    saveBytes = CryptoUtil.EncryptIfSettingPermitsOtherwisePaintTxt(json, key, iv);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage)
-                    {
-                        Debug.LogError("Byte conversion error. This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
-                    }
-                }
-                var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
-                try
-                {
-                    File.WriteAllBytes(fPath, saveBytes);
-                }
-                catch (System.Exception ex)
-                {
-                    if (Config.data != null && Config.data.DebugMessage)
-                    {
-                        Debug.LogError("Can not write the atomic save file into disk! Exception message: " + ex.Message);
-                    }
+                    masterSave = GetDefaultMasterSave();
                 }
             }
         }
 
-        internal static void LoadMasterClassSaveFromDevice()
+        internal static void WriteMasterSave()
         {
-            var fPath = AtomUtil.GetMasterAtomicSaveFilePath();
-            if (File.Exists(fPath))
+            if (masterSave == null)
             {
-                var saveBytes = File.ReadAllBytes(fPath);
-                var key = "";
-                var iv = "";
-                if (Config.data != null && Config.data.EncryptionConfig != null)
+                masterSave = GetDefaultMasterSave();
+            }
+            string json = "";
+            try
+            {
+                json = JsonUtility.ToJson(masterSave);
+            }
+            catch (System.Exception ex)
+            {
+                if (Config.data != null && Config.data.DebugMessage)
                 {
-                    key = Config.data.EncryptionConfig.KEY;
-                    iv = Config.data.EncryptionConfig.IV;
+                    Debug.LogError("Can not convert the master save data for class save into json. Exception message: " + ex.Message);
                 }
-                var saveJson = CryptoUtil.DecryptIfSettingPermitsOtherwisePaintTxt(saveBytes, key, iv);
-                saveInternal = Util.GetDataFromJson<AtomicSaveMasterData>(saveJson);
             }
-            else
+
+            byte[] saveBytes = null;
+            try
             {
-                saveInternal = GetDefaultSave();
-                WriteToDevice();
+                saveBytes = CryptoUtil.EncryptIfRequired(json);
             }
+            catch (System.Exception ex)
+            {
+                if (Config.data != null && Config.data.DebugMessage)
+                {
+                    Debug.LogError("Byte conversion error during class save master data write to device. " +
+                        "This is most likely due to invalid encryption operation. Exception message: " + ex.Message);
+                }
+            }
+            var fPath = ClassSaveUtil.GetMasterSaveFilePath();
+            try
+            {
+                File.WriteAllBytes(fPath, saveBytes);
+            }
+            catch (System.Exception ex)
+            {
+                if (Config.data != null && Config.data.DebugMessage)
+                {
+                    Debug.LogError("Can not write the class master save file into disk! Exception message: " + ex.Message);
+                }
+            }
+        }
+
+        internal static void Clear(string[] keys, System.Action<LocalDataCode> OnComplete)
+        {
+            EnsureMasterSave();
+            if (masterSave != null && masterSave.data != null && masterSave.data.Length > 0)
+            {
+                
+            }
+        }
+
+        internal static void Load<T>(string[] keys, System.Action<LocalDataCode, T> OnComplete)
+        {
+            EnsureMasterSave();
+
+        }
+
+        internal static void Save<T>(T data, string[] keys, System.Action<LocalDataCode> OnComplete)
+        {
+            EnsureMasterSave();
+
         }
     }
 }

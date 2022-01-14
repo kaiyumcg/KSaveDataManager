@@ -63,7 +63,7 @@ namespace KSaveDataMan
             return decryptText;
         }
 
-        internal static byte[] EncryptIfSettingPermitsOtherwisePaintTxt(string str, string key, string iv)
+        internal static byte[] EncryptIfRequired(string str)
         {
             byte[] saveBytes = null;
             var useEncryption = false;
@@ -74,6 +74,8 @@ namespace KSaveDataMan
 
             if (useEncryption)
             {
+                string key = Config.data.EncryptionConfig.KEY;
+                string iv = Config.data.EncryptionConfig.IV;
                 saveBytes = CryptoUtil.EncryptStringToBytes(str, key, iv);
             }
             else
@@ -108,7 +110,7 @@ namespace KSaveDataMan
             return saveBytes;
         }
 
-        internal static string DecryptIfSettingPermitsOtherwisePaintTxt(byte[] data, string key, string iv)
+        internal static string DecryptIfRequired(byte[] data)
         {
             string result = "";
             var useEncryption = false;
@@ -118,6 +120,8 @@ namespace KSaveDataMan
             }
             if (useEncryption)
             {
+                string key = Config.data.EncryptionConfig.KEY;
+                string iv = Config.data.EncryptionConfig.IV;
                 result = CryptoUtil.DecryptStringFromBytes(data, key, iv);
             }
             else

@@ -7,22 +7,29 @@ namespace KSaveDataMan
     //CDATA style thing or get/set or both or completely new?
     public static class SaveDataManager
     {
-        public static bool IsInitialized { get { return SaveState.systemInitialised; } }
+        public static bool IsInitialized { get { return systemInitialised; } }
         public static System.Action OnInitialized;
         public static UnityEvent OnInitializedEvent;
+        static SaveDataOperationManager operationManager = null;
+        static bool systemInitialised = false;
+
+        static void CheckManager()
+        {
+            if (operationManager == null)
+            {
+                var g = new GameObject("_SaveDataOperationManager_Gen_");
+                operationManager = g.AddComponent<SaveDataOperationManager>();
+            }
+        }
 
         public static void InitSystem(SaveDataConfig config, System.Action OnComplete = null)
         {
-            if (SaveState.operationManager == null)
-            {
-                var g = new GameObject("_SaveDataOperationManager_Gen_");
-                SaveState.operationManager = g.AddComponent<SaveDataOperationManager>();
-            }
+            CheckManager();
             Config.data = config;
             AtomicSaveInternalController.LoadFromDevice();
             //todo do cloud initialization stuffs
             //todo do any big data or small class data json initialization stuffs
-            SaveState.systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
+            systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
             OnInitialized?.Invoke();
             OnInitializedEvent?.Invoke();
         }
@@ -34,6 +41,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void DeleteAllData()
         {
+            CheckManager();
             AtomicSaveInternalController.DeleteData(null);
             throw new System.NotImplementedException();
         }
@@ -46,6 +54,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the atomic data</param>
         public static void DeleteAtomic(params string[] identifiers)
         {
+            CheckManager();
             AtomicSaveInternalController.DeleteData(identifiers);
         }
 
@@ -55,7 +64,8 @@ namespace KSaveDataMan
         /// </summary>
         public static void SaveAtomicToDevice()
         {
-            AtomicSaveInternalController.WriteMasterAtomicSaveDataToDevice();
+            CheckManager();
+            AtomicSaveInternalController.WriteMasterSave();
         }
 
         /// <summary>
@@ -64,6 +74,7 @@ namespace KSaveDataMan
         /// </summary>
         public static void LoadAtomicFromDevice()
         {
+            CheckManager();
             AtomicSaveInternalController.LoadFromDevice();
         }
 
@@ -77,6 +88,7 @@ namespace KSaveDataMan
         /// <returns></returns>
         public static AtomicSaveData<T> GetOrCreateAtomic<T>(params string[] identifiers) where T : struct
         {
+            CheckManager();
             return AtomicSaveData<T>.CreateHandle(identifiers);
         }
         #endregion
@@ -90,6 +102,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle ClearBigLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -103,6 +116,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle SaveBigDataToDevice(byte[] data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -114,6 +128,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle LoadBigDataFromDevice(System.Action<LocalDataCode, byte[]> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
         #endregion
@@ -127,6 +142,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle ClearLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -141,6 +157,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle SaveDataToDevice<T>(T data, System.Action<LocalDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -153,6 +170,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle LoadDataFromDevice<T>(System.Action<LocalDataCode, T> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();   
         }
         #endregion
@@ -166,6 +184,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle ClearCloudData(System.Action<CloudDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -180,6 +199,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle SaveDataToCloud<T>(T data, System.Action<CloudDataCode> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
 
@@ -192,6 +212,7 @@ namespace KSaveDataMan
         /// <param name="identifiers">List of labels attributed to the data</param>
         public static AsyncDataOpHandle LoadDataFromCloud<T>(System.Action<CloudDataCode, T> OnComplete, params string[] identifiers)
         {
+            CheckManager();
             throw new System.NotImplementedException();
         }
         #endregion

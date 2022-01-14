@@ -24,5 +24,6 @@ namespace KSaveDataMan
     {
         [SerializeField] internal string[] keys;
         [SerializeField] internal string json_file_path;
+        [SerializeField] internal string typeName;
     }
 }
