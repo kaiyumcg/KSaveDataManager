@@ -16,6 +16,7 @@ namespace KSaveDataMan
         [SerializeField] internal string unityVer = "";
         [SerializeField] internal string gameBundleID = "";
         [SerializeField] internal EncodingType encoding = EncodingType.ASCII;
+        [SerializeField] internal LocatorForMasterSaveData[] data = null;
     }
 
     [System.Serializable]
@@ -24,5 +25,6 @@ namespace KSaveDataMan
         [SerializeField] internal string[] keys;
         [SerializeField] internal string value;
         [SerializeField] internal string typeName;
+        [SerializeField] internal bool game_wrote_it;
     }
 }

@@ -5,18 +5,6 @@ using UnityEngine;
 namespace KSaveDataMan
 {
     [System.Serializable]
-    internal class AtomicSaveMasterData : MasterSaveJsonDefault
-    {
-        [SerializeField] internal AtomicSaveEachDataEntry[] data;
-    }
-
-    [System.Serializable]
-    internal class AtomicSaveEachDataEntry : LocatorForMasterSaveData
-    {
-        [SerializeField] internal bool game_wrote_it;
-    }
-
-    [System.Serializable]
     internal class Ray_Wrapper
     {
         [SerializeField] internal Vector3 rayOrigin, rayDirection;

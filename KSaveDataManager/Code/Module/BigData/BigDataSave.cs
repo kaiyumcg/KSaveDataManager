@@ -6,21 +6,21 @@ using UnityEngine;
 
 namespace KSaveDataMan
 {
-    internal class ClassSave : StructuredSave
+    internal class BigDataSave : StructuredSave
     {
         protected override bool ConsiderTypeNameForFindingProperLocatorWhenLoadOperation()
         {
-            return true;
+            return false;
         }
 
         protected override bool ConsiderTypeNameForFindingProperLocatorWhenSaveOperation()
         {
-            return true;
+            return false;
         }
 
         protected override string GetMasterSaveFilePath()
         {
-            return Util.GetMasterClassSaveFilePath();
+            return Util.GetMasterSaveFilePathForBigData();
         }
 
         protected override void OnClear()
@@ -31,13 +31,11 @@ namespace KSaveDataMan
         protected override T OnLoadWithLocator<T>(ref LocatorForMasterSaveData locator, Action<LocalDataCode, T> OnComplete)
         {
             var fPath = locator.value;
-            FileLoadUtil.LoadDataAsync(fPath, (success, jSave) =>
+            FileLoadUtil.LoadDataAsync(fPath, (success, rawByteData) =>
             {
                 if (success)
                 {
-                    var json = CryptoUtil.DecryptIfRequired(jSave);
-                    var result = Util.GetDataFromJson<T>(json);
-                    OnComplete?.Invoke(result == null ? LocalDataCode.ConversionError : LocalDataCode.Success, result);
+                    OnComplete?.Invoke(rawByteData == null || rawByteData.Length == 0 ? LocalDataCode.DiskLoadError : LocalDataCode.Success, (T)(object)rawByteData);
                 }
                 else
                 {
@@ -49,9 +47,8 @@ namespace KSaveDataMan
 
         protected override void OnSaveWithLocator<T>(ref LocatorForMasterSaveData locator, T data, Action<LocalDataCode> OnComplete)
         {
-            var json = Util.GetDataAsJsonString(data);
-            var wBytes = CryptoUtil.EncryptIfRequired(json);
-            FileWriteUtil.WriteDataAsync(wBytes, locator.value, (success) =>
+            byte[] rawByteData = (byte[])(object)data;
+            FileWriteUtil.WriteDataAsync(rawByteData, locator.value, (success) =>
             {
                 OnComplete?.Invoke(success ? LocalDataCode.Success : LocalDataCode.DiskWriteError);
             });

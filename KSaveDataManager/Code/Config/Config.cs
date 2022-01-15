@@ -23,6 +23,7 @@ namespace KSaveDataMan
         public string AtomicPerDataSalt { get { return atomicPerDataSalt; } set { atomicPerDataSalt = value; } }
         public string AtomicPerDataSharedSecret { get { return atomicPerDataSharedSecret; } set { atomicPerDataSharedSecret = value; } }
         public EncodingType AtomicPerDataCredentialEncoding { get { return atomicPerDataCredentialEncoding; } set { atomicPerDataCredentialEncoding = value; } }
+        
         internal EncryptionConfig() { }
     }
 
@@ -33,14 +34,15 @@ namespace KSaveDataMan
 
     public class SaveDataConfig
     {
+        string structuredSaveExtension = ".SVST";
         bool debugMessage = false;
         bool jsonPettyPrint = false;
-        bool useUnityPlayerPrefForAtomic = false;
         EncryptionConfig encryptionConfig = null;
         CloudConfig cloudConfig = null;
         EncodingType encodingType = EncodingType.ASCII;
         string atomicSaveFileName = "atom.sv";
         string classSaveMasterFileName = "classSaveMaster.sv";
+        string bigDataSaveMasterFileName = "bigData.sv";
 #if UNITY_EDITOR
         SaveFilePathMode savePath = SaveFilePathMode.AppDataPath;
 #else
@@ -48,14 +50,14 @@ namespace KSaveDataMan
 #endif
         public bool DebugMessage { get { return debugMessage; } set { debugMessage = value; } }
         public bool JsonPettyPrint { get { return jsonPettyPrint; } set { jsonPettyPrint = value; } }
-        public bool UseUnityPlayerPrefForAtomic { get { return useUnityPlayerPrefForAtomic; } set { useUnityPlayerPrefForAtomic = value; } }
         public EncryptionConfig EncryptionConfig { get { return encryptionConfig; } set { encryptionConfig = value; } }
         public CloudConfig CloudConfig { get { return cloudConfig; } set { cloudConfig = value; } }
         public EncodingType _EncodingType { get { return encodingType; } set { encodingType = value; } }
         public SaveFilePathMode SavePath { get { return savePath; } set { savePath = value; } }
         public string AtomicMasterSaveFileName { get { return atomicSaveFileName; } set { atomicSaveFileName = value; } }
         public string ClassSaveMasterFileName { get { return classSaveMasterFileName; } set { classSaveMasterFileName = value; } }
-
+        public string BigDataSaveMasterFileName { get { return bigDataSaveMasterFileName; } set { bigDataSaveMasterFileName = value; } }
+        public string StructuredSaveExtension { get { return structuredSaveExtension; } set { structuredSaveExtension = value; } }
         public static EncryptionConfig CreateEncryptionConfig()
         {
             return new EncryptionConfig();

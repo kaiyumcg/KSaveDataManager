@@ -11,6 +11,13 @@ namespace KSaveDataMan
         public static System.Action OnInitialized;
         public static UnityEvent OnInitializedEvent;
         internal static SaveDataOperationManager operationManager = null;
+        static ClassSave classSave = null;
+        static BigDataSave bigDataSave = null;
+        static AtomicSave atomicSave = null;
+        internal static ClassSave ClassSave { get { return classSave; } }
+        internal static BigDataSave BigDataSave { get { return bigDataSave; } }
+        internal static AtomicSave AtomicSave { get { return atomicSave; } }
+
         static bool systemInitialised = false;
         static void CheckManager()
         {
@@ -33,8 +40,13 @@ namespace KSaveDataMan
         {
             CheckManager();
             Config.data = config;
-            AtomicSaveInternalController.LoadMasterSaveToMemory();
-            ClassSave.LoadMasterSaveToMemory();
+            classSave = new ClassSave();
+            bigDataSave = new BigDataSave();
+            atomicSave = new AtomicSave();
+
+            atomicSave.LoadMasterSaveToMemory();
+            bigDataSave.LoadMasterSaveToMemory();
+            classSave.LoadMasterSaveToMemory();
             //todo do cloud initialization stuffs
             //todo do any big data or small class data json initialization stuffs
             systemInitialised = true;//this should ideally be inside the callback when everything is actually initialized.
@@ -51,8 +63,8 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.Clear(null);
-            ClassSave.Clear(null);
+            AtomicSave.Clear(null);
+            classSave.Clear(null);
         }
 
         #region Atomic
@@ -65,7 +77,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.Clear(identifiers);
+            AtomicSave.Clear(identifiers);
         }
 
         /// <summary>
@@ -76,7 +88,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.WriteMasterSaveToDevice();
+            AtomicSave.WriteMasterSaveToDevice();
         }
 
         /// <summary>
@@ -87,7 +99,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            AtomicSaveInternalController.LoadMasterSaveToMemory();
+            AtomicSave.LoadMasterSaveToMemory();
         }
 
         /// <summary>
@@ -111,19 +123,19 @@ namespace KSaveDataMan
         /// Permanently deletes all big data(typically big one. i.e. several megabytes to gigabytes) identified by all[NOT just any but 'all'] the 'identifier's.
         /// <para>If no identifiers are provided then this will permanently delete all local data</para>
         /// </summary>
-        /// <param name="OnComplete">Operation completion callback</param>
         /// <param name="identifiers">List of labels attributed to the data</param>
-        public static void ClearBigLocalData(System.Action<LocalDataCode> OnComplete, params string[] identifiers)
+        public static void ClearBigLocalData(params string[] identifiers)
         {
             CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();
+            bigDataSave.Clear(identifiers);
         }
 
         /// <summary>
         /// Store the byte array data(typically big one. i.e. several megabytes to gigabytes) into device storage with 'identifier's.
         /// <para>If there is any data present with 'all' 'identifiers', then this will overwrite the local data.</para>
         /// <para>Otherwise it will create a new data in the local storage.</para>
+        /// <para>This uses seperate thread. So do not use unity API in the callback</para>
         /// </summary>
         /// <param name="data">Byte array data</param>
         /// <param name="OnComplete">Operation completion callback</param>
@@ -132,7 +144,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();
+            bigDataSave.Save<byte[]>(data, identifiers, OnComplete);
         }
 
         /// <summary>
@@ -145,7 +157,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            throw new System.NotImplementedException();
+            bigDataSave.Load<byte[]>(identifiers, OnComplete);
         }
         #endregion
 
@@ -160,7 +172,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            ClassSave.Clear(identifiers);
+            classSave.Clear(identifiers);
         }
 
         /// <summary>
@@ -168,6 +180,7 @@ namespace KSaveDataMan
         /// <para>If there is any data present with 'all' 'identifiers', then this will overwrite the local class/struct data.</para>
         /// <para>Otherwise it will create a new data in the local storage.</para>
         /// <para>Only work for the data that is possible to serialize/deserialize by unity </para>
+        /// <para>This uses seperate thread. So do not use unity API in the callback</para>
         /// </summary>
         /// <typeparam name="T">Data Type</typeparam>
         /// <param name="data">Data</param>
@@ -177,7 +190,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            ClassSave.Save(data, identifiers, OnComplete);
+            classSave.Save(data, identifiers, OnComplete);
         }
 
         /// <summary>
@@ -192,7 +205,7 @@ namespace KSaveDataMan
         {
             CheckInitOfSys();
             CheckManager();
-            ClassSave.Load(identifiers, OnComplete);
+            classSave.Load(identifiers, OnComplete);
         }
         #endregion
 
