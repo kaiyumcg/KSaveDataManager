@@ -1,0 +1,18 @@
+{
+    "name": "KSaveDataManager",
+    "rootNamespace": "",
+    "references": [
+        "AttributeExt",
+        "UnityExt",
+        "Textus.SerializeReferenceUI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
