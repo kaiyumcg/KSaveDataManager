@@ -3,8 +3,7 @@
     "rootNamespace": "",
     "references": [
         "AttributeExt",
-        "UnityExt",
-        "Textus.SerializeReferenceUI"
+        "UnityExt"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

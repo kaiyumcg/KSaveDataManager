@@ -7,3 +7,9 @@ Sava/Load simple to complex class data for unity engine. Very early prototype st
 "com.kaiyum.ksavedatamanager": "https://github.com/kaiyumcg/KSaveDataManager.git"
 ```
 
+Since unity does not support git dependencies, you need the following entries as well:
+```C#
+"com.kaiyum.attributeext" : "https://github.com/kaiyumcg/AttributeExt.git",
+"com.kaiyum.unityext": "https://github.com/kaiyumcg/UnityExt.git"
+```
+Add them into your manifest.json file in "Packages\" directory of your unity project, if they are already not in manifest.json file.
