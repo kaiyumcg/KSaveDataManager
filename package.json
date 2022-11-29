@@ -1,14 +1,18 @@
 {
   "name": "com.kaiyum.ksavedatamanager",
-  "author": "Md Al Kaiyum",
   "displayName": "KSaveDataManager",
   "version": "1.0.0",
-  "unity": "2018.3",
+  "unity": "2020.3.20f1",
   "description": "Sava/Load simple to complex class data for unity engine",
+  "licence": "MIT",
   "category": "Unity",
   "keywords": [
     "Save System"
   ],
+  "author": {
+    "name": "Md Al Kaiyum",
+    "url": "https://github.com/kaiyumcg"
+  },
   "dependencies": {
     "com.kaiyum.unityext": "https://github.com/kaiyumcg/UnityExt.git"
   }
