@@ -2,7 +2,7 @@
     "name": "KSaveDataManager",
     "rootNamespace": "",
     "references": [
-        "AttributeExt",
+        "AttributeExt2",
         "UnityExt"
     ],
     "includePlatforms": [],
