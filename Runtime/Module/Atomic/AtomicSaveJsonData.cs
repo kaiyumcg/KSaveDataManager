@@ -19,31 +19,25 @@ namespace KSaveDataMan
     [System.Serializable]
     internal class Bounds_Wrapper
     {
-        [SerializeField] internal Bounds data;
+        [SerializeField] internal Vector3 center, size;
     }
 
     [System.Serializable]
     internal class BoundsInt_Wrapper
     {
-        [SerializeField] internal BoundsInt data;
-    }
-
-    [System.Serializable]
-    internal class LayerMask_Wrapper
-    {
-        [SerializeField] internal LayerMask data;
+        [SerializeField] internal Vector3Int position, size;
     }
 
     [System.Serializable]
     internal class Rect_Wrapper
     {
-        [SerializeField] internal Rect data;
+        [SerializeField] internal Vector2 position, size;
     }
 
     [System.Serializable]
     internal class RectInt_Wrapper
     {
-        [SerializeField] internal RectInt data;
+        [SerializeField] internal Vector2Int position, size;
     }
 
     [System.Serializable]

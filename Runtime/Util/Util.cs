@@ -279,12 +279,6 @@ namespace KSaveDataMan
             {
                 result = (T)(object)vl;
             }
-            //else if (typeof(T) == typeof(System.Enum))
-            //{
-            //    T res;
-            //    System.Enum.TryParse<T>(vl, true, out res);
-            //    result = (T)(object)res;
-            //}
             else if (typeof(T) == typeof(System.DateTime))
             {
                 long tick;
@@ -313,7 +307,7 @@ namespace KSaveDataMan
                 Bounds_Wrapper jsData = Util.GetDataFromJson<Bounds_Wrapper>(vl);
                 if (jsData != null)
                 {
-                    res = jsData.data;
+                    res = new Bounds(jsData.center, jsData.size);
                 }
                 result = (T)(object)res;
             }
@@ -323,17 +317,7 @@ namespace KSaveDataMan
                 BoundsInt_Wrapper jsData = Util.GetDataFromJson<BoundsInt_Wrapper>(vl);
                 if (jsData != null)
                 {
-                    res = jsData.data;
-                }
-                result = (T)(object)res;
-            }
-            else if (typeof(T) == typeof(LayerMask))
-            {
-                LayerMask res = default;
-                LayerMask_Wrapper jsData = Util.GetDataFromJson<LayerMask_Wrapper>(vl);
-                if (jsData != null)
-                {
-                    res = jsData.data;
+                    res = new BoundsInt(jsData.position, jsData.size);
                 }
                 result = (T)(object)res;
             }
@@ -343,7 +327,7 @@ namespace KSaveDataMan
                 Rect_Wrapper jsData = Util.GetDataFromJson<Rect_Wrapper>(vl);
                 if (jsData != null)
                 {
-                    res = jsData.data;
+                    res = new Rect(jsData.position, jsData.size);
                 }
                 result = (T)(object)res;
             }
@@ -353,7 +337,7 @@ namespace KSaveDataMan
                 RectInt_Wrapper jsData = Util.GetDataFromJson<RectInt_Wrapper>(vl);
                 if (jsData != null)
                 {
-                    res = jsData.data;
+                    res = new RectInt(jsData.position, jsData.size);
                 }
                 result = (T)(object)res;
             }
@@ -496,31 +480,25 @@ namespace KSaveDataMan
             else if (typeof(T) == typeof(Bounds))
             {
                 Bounds curVal = (Bounds)(object)v;
-                Bounds_Wrapper jsData = new Bounds_Wrapper { data = curVal };
+                Bounds_Wrapper jsData = new Bounds_Wrapper { center = curVal.center, size = curVal.size };
                 result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(BoundsInt))
             {
                 BoundsInt curVal = (BoundsInt)(object)v;
-                BoundsInt_Wrapper jsData = new BoundsInt_Wrapper { data = curVal };
-                result = JsonUtility.ToJson(jsData, usePettyPrint);
-            }
-            else if (typeof(T) == typeof(LayerMask))
-            {
-                LayerMask curVal = (LayerMask)(object)v;
-                LayerMask_Wrapper jsData = new LayerMask_Wrapper { data = curVal };
+                BoundsInt_Wrapper jsData = new BoundsInt_Wrapper { position = curVal.position, size = curVal.size };
                 result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Rect))
             {
                 Rect curVal = (Rect)(object)v;
-                Rect_Wrapper jsData = new Rect_Wrapper { data = curVal };
+                Rect_Wrapper jsData = new Rect_Wrapper { position = curVal.position, size = curVal.size };
                 result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(RectInt))
             {
                 RectInt curVal = (RectInt)(object)v;
-                RectInt_Wrapper jsData = new RectInt_Wrapper { data = curVal };
+                RectInt_Wrapper jsData = new RectInt_Wrapper { position = curVal.position, size = curVal.size };
                 result = JsonUtility.ToJson(jsData, usePettyPrint);
             }
             else if (typeof(T) == typeof(Vector2Int))
